@@ -16,6 +16,8 @@
 %token <y_word> REGONLY
 %token <y_word> COND
 %token <y_word> RETNOP
+%token <y_word> FRAMEOP
+%token <y_word> RETFOP
 %token <y_word> BITOP
 %token <y_word> UNOP
 %token <y_word> GENDD

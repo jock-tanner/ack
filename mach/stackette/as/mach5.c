@@ -119,3 +119,36 @@ void emit_branch(int word, expr_t e)
 	}
 	emit2(word | (int)((off >> 1) & 0x7ff));
 }
+
+/*
+ * retf $r: the epilogue of a function that returns r words on the stack.
+ * The result goes to [pfp+2n], n = parameter words - r, the locals are
+ * released, and ret #n drops the rest of the parameters. If the result is
+ * bigger than the parameters, it goes below pfp, and ret #0 leaves it there.
+ */
+void emit_retf(int words)
+{
+	int n = frm_par / 2 - words;
+	int base = n >= 0 ? 2 * n : 2 * n;
+	int free_bytes = frm_loc;
+	int i;
+
+	if (n < 0)
+		free_bytes -= 2 * words - frm_par;
+	for (i = 0; i < words; i++)
+		emit2((FMT_PFP << 14) | (OP_ST << 10) | (2 << 8) |
+			pfp_field(base + 2 * i));
+	if (free_bytes < -128 || free_bytes > 127) {
+		serror("retf: frame too big");
+		return;
+	}
+	if (free_bytes)
+		emit2(0xd400 | (2 << 8) | (free_bytes & 0xff));
+	if (n < 0)
+		n = 0;
+	if (n > 63) {
+		serror("retf: too many parameter words");
+		return;
+	}
+	emit2(0xf840 | n);
+}

@@ -49,10 +49,14 @@ con_mult(word sz) {
  * The call instruction already made pfp point at the saved frame pointer, so
  * only the room for locals has to be reserved
  */
+static long frame_locals;
+
 void prolog(full nlocals)
 {
+	frame_locals = (long)nlocals;
+	fprintf(codefile, "\tframe %ld, 0\n", frame_locals);
 	if (nlocals > 0)
-		fprintf(codefile, "\taddp sp, $-%ld\n", (long)nlocals);
+		fprintf(codefile, "\taddp sp, $-%ld\n", frame_locals);
 }
 
 void mes(word type)
@@ -74,6 +78,13 @@ void mes(word type)
 						break;
 				}
 			}
+		case ms_par:
+			getarg(cst_ptyp);
+			fprintf(codefile, "\tframe %ld, %ld\n", frame_locals,
+				(long)argval);
+			while (getarg(any_ptyp) != sp_cend)
+				;
+			break;
 		default:
 			while (getarg(any_ptyp) != sp_cend)
 				;

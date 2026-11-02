@@ -27,3 +27,11 @@ extern opnd_t opnd;
 void emit_gen(int op, int dd, int is_dst);
 void emit_lea(int dd);
 void emit_branch(int word, expr_t e);
+
+/*
+ * The frame of the current function, set by .frame: the bytes of locals and
+ * of parameters. retf expands to the epilogue, see emit_retf().
+ */
+extern int frm_loc;
+extern int frm_par;
+void emit_retf(int words);

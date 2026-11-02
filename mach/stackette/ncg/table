@@ -13,7 +13,7 @@
 
 EM_WSIZE=2
 EM_PSIZE=2
-EM_BSIZE=2
+EM_BSIZE=0
 
 FORMAT = "%d"
 
@@ -39,6 +39,7 @@ ext2		= { ADDR off; } 2 cost(4,8) "[" off "]" .
 local2		= { INT ind; } 2 cost(2,5) "[pfp+" ind "]" .
 addr_local	= { INT ind; } 2 cost(2,3) "[pfp+" ind "]" .
 label		= { ADDR off; } 2 off .
+onstack		= { INT dummy; } 2 cost(0,0) "" .
 
 SETS
 
@@ -78,12 +79,8 @@ skipeq "skip eq" .
 skipne "skip ne" .
 skipgt "skip gt" .
 skipge "skip ge" .
-retn0 "retn $0" .
+retf "retf" imm8:ro .
 addpsp "addp sp," imm8:ro .
-ldmidx "ld.push midx" .
-ldmbp "ld.push mbp" .
-stmidx "st.pop midx" .
-stmbp "st.pop mbp" .
 nop .
 
 MOVES
@@ -103,6 +100,9 @@ from arith to STACK
 
 from addr_local to STACK
 	gen leapush %1
+
+from onstack to STACK
+	gen
 
 COERCIONS
 
@@ -350,6 +350,35 @@ with STACK
 
 /* group 7: calls */
 
+/*
+ * The callee removes the arguments and leaves the result on the stack, so
+ * the asp after a call produces no code and lfr only tells the fake stack
+ * that the result is already there
+ */
+pat cal asp lfr $3==2
+with STACK
+	gen calla {label, $1}
+	yields {onstack, 0}
+
+pat cal asp lfr $3==4
+with STACK
+	gen calla {label, $1}
+	yields {onstack, 0} {onstack, 0}
+
+pat cal lfr $2==2
+with STACK
+	gen calla {label, $1}
+	yields {onstack, 0}
+
+pat cal lfr $2==4
+with STACK
+	gen calla {label, $1}
+	yields {onstack, 0} {onstack, 0}
+
+pat cal asp
+with STACK
+	gen calla {label, $1}
+
 pat cal
 with STACK
 	gen calla {label, $1}
@@ -363,28 +392,20 @@ pat asp $1<0 && $1>=0-128
 with STACK
 	gen addpsp {constn8, $1}
 
-pat lfr $1==2
-with STACK
-	gen ldmidx .
-
-pat lfr $1==4
-with STACK
-	gen ldmbp .
-	    ldmidx .
-
+/*
+ * The epilogue depends on the sizes of the parameters and of the locals,
+ * which the assembler knows from .frame: see retf there
+ */
 pat ret $1==0
 with STACK
-	gen retn0 .
+	gen retf {constp8, 0}
 
 pat ret $1==2
 with STACK
-	gen stmidx .
-	    retn0 .
+	gen retf {constp8, 1}
 
 pat ret $1==4
 with STACK
-	gen stmidx .
-	    stmbp .
-	    retn0 .
+	gen retf {constp8, 2}
 
 pat nop

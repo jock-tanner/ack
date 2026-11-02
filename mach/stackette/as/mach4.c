@@ -42,6 +42,10 @@ operation
 					serror("ret: 0..63 words");
 				emit2($1 | ($3 & 63));
 			}
+	|	FRAMEOP absexp ',' absexp
+			{	frm_loc = (int)$2; frm_par = (int)$4;}
+	|	RETFOP '$' absexp
+			{	emit_retf((int)$3);}
 	|	BITOP '$' absexp
 			{	if ($3 < 0 || $3 > 255)
 					serror("setb/clrb: 0..255");
