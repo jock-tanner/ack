@@ -1,0 +1,57 @@
+#define UNTESTED
+
+EM_WSIZE=2
+EM_PSIZE=2
+EM_BSIZE=2
+
+FORMAT = "%d"
+
+PROPERTIES
+
+STACKPOINTER
+LOCALBASE
+PROGRAMCOUNTER
+
+REGISTERS
+
+sp : STACKPOINTER.
+pfp("pfp") : LOCALBASE.
+pc : PROGRAMCOUNTER.
+
+TOKENS
+
+const2 = { INT num; } 2 cost(2,2) num .
+
+SETS
+
+src2 = const2 .
+
+INSTRUCTIONS
+
+cost(2,2)
+pushi src2:ro .
+nop .
+
+MOVES
+
+from const2 to const2
+	gen nop.
+
+TESTS
+
+to test const2
+	gen nop.
+
+STACKINGRULES
+
+from const2 to STACK
+	gen pushi %1
+
+COERCIONS
+
+from const2 yields {const2, %1.num}
+
+PATTERNS
+
+pat loc			yields {const2, $1}
+pat nop
