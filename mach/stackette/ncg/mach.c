@@ -46,11 +46,13 @@ con_mult(word sz) {
 #include <con_float>
 
 /*
- * TODO: the frame. For now just a comment, so that the pipeline runs.
+ * The call instruction already made pfp point at the saved frame pointer, so
+ * only the room for locals has to be reserved
  */
 void prolog(full nlocals)
 {
-	fprintf(codefile, "\t! prolog: %ld bytes of locals\n", (long)nlocals);
+	if (nlocals > 0)
+		fprintf(codefile, "\taddp sp, $-%ld\n", (long)nlocals);
 }
 
 void mes(word type)

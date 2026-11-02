@@ -1,4 +1,15 @@
-#define UNTESTED
+/*
+ * Code generator table for Stackette, a 16-bit stack machine.
+ *
+ * Conventions:
+ *   - locals are [pfp+n], n even, -128..126; parameters are above the saved
+ *     frame pointer, so EM_BSIZE is 2 (the return address is on the return
+ *     stack)
+ *   - the caller removes the arguments: every function returns with `retn $0`
+ *   - a function result is returned in MIDX (the low word) and MBP (the high
+ *     word of a long)
+ *   - a 4-byte value on the stack has its low word on top
+ */
 
 EM_WSIZE=2
 EM_PSIZE=2
@@ -20,16 +31,59 @@ pc : PROGRAMCOUNTER.
 
 TOKENS
 
-const2 = { INT num; } 2 cost(2,2) num .
+constp8		= { INT num; } 2 cost(2,3) "$" num .
+constn8		= { INT num; } 2 cost(2,3) "$" num .
+const2		= { INT num; } 2 cost(4,6) "#" num .
+addr_ext	= { ADDR off; } 2 cost(4,6) "#" off .
+ext2		= { ADDR off; } 2 cost(4,8) "[" off "]" .
+local2		= { INT ind; } 2 cost(2,5) "[pfp+" ind "]" .
+addr_local	= { INT ind; } 2 cost(2,3) "[pfp+" ind "]" .
+label		= { ADDR off; } 2 off .
 
 SETS
 
-src2 = const2 .
+arith	= constp8 + constn8 + const2 + addr_ext + ext2 + local2 .
+logic	= constp8 + const2 + addr_ext + ext2 + local2 .
+mem2	= ext2 + local2 .
+imm8	= constp8 + constn8 .
 
 INSTRUCTIONS
 
-cost(2,2)
-pushi src2:ro .
+cost(2,3)
+
+ldpush "ld.push" arith:ro .
+leapush "lea.push" addr_local:ro .
+stpop "st.pop" mem2:wo .
+stnull "st.pop null" .
+addtos "add.tos" arith:ro .
+subtos "sub.tos" arith:ro .
+andtos "and.tos" logic:ro .
+ortos "or.tos" logic:ro .
+xortos "xor.tos" logic:ro .
+addstk "add.push tos" .
+substk "sub.push tos" .
+andstk "and.push tos" .
+orstk "or.push tos" .
+xorstk "xor.push tos" .
+negtos "neg tos" .
+nottos "not tos" .
+dupstk "ld.push tos" .
+ldind "ld.tos [tos]" .
+stind "st.under [tos]" .
+bra label .
+calla label .
+skiplt "skip lt" .
+skiple "skip le" .
+skipeq "skip eq" .
+skipne "skip ne" .
+skipgt "skip gt" .
+skipge "skip ge" .
+retn0 "retn $0" .
+addpsp "addp sp," imm8:ro .
+ldmidx "ld.push midx" .
+ldmbp "ld.push mbp" .
+stmidx "st.pop midx" .
+stmbp "st.pop mbp" .
 nop .
 
 MOVES
@@ -44,14 +98,293 @@ to test const2
 
 STACKINGRULES
 
-from const2 to STACK
-	gen pushi %1
+from arith to STACK
+	gen ldpush %1
+
+from addr_local to STACK
+	gen leapush %1
 
 COERCIONS
 
-from const2 yields {const2, %1.num}
+from constp8 yields {const2, %1.num}
+
+from constn8 yields {const2, %1.num}
 
 PATTERNS
 
-pat loc			yields {const2, $1}
+/* group 1: loads */
+
+pat loc $1>=0 && $1<=127		yields {constp8, $1}
+pat loc $1>=0-128 && $1<0		yields {constn8, $1}
+pat loc					yields {const2, $1}
+pat ldc					yields {const2, highw($1)} {const2, loww($1)}
+pat lol $1>=0-128 && $1<=126 && ($1&1)==0	yields {local2, $1}
+pat ldl $1>=0-128 && $1<=124 && ($1&1)==0	yields {local2, $1+2} {local2, $1}
+pat loe					yields {ext2, $1}
+pat lde					yields {ext2, $1+2} {ext2, $1}
+pat lae					yields {addr_ext, $1}
+pat lal $1>=0-128 && $1<=126 && ($1&1)==0	yields {addr_local, $1}
+
+/* group 2: stores */
+
+pat stl $1>=0-128 && $1<=126 && ($1&1)==0
+with STACK
+	gen stpop {local2, $1}
+
+pat sdl $1>=0-128 && $1<=124 && ($1&1)==0
+with STACK
+	gen stpop {local2, $1}
+	    stpop {local2, $1+2}
+
+pat ste
+with STACK
+	gen stpop {ext2, $1}
+
+pat sde
+with STACK
+	gen stpop {ext2, $1}
+	    stpop {ext2, $1+2}
+
+/* group 3: arithmetic and logic on words */
+
+pat adi $1==2
+with arith STACK
+	gen addtos %1
+with STACK
+	gen addstk .
+
+pat sbi $1==2
+with arith STACK
+	gen subtos %1
+with STACK
+	gen substk .
+
+pat and $1==2
+with logic STACK
+	gen andtos %1
+with STACK
+	gen andstk .
+
+pat ior $1==2
+with logic STACK
+	gen ortos %1
+with STACK
+	gen orstk .
+
+pat xor $1==2
+with logic STACK
+	gen xortos %1
+with STACK
+	gen xorstk .
+
+pat ngi $1==2
+with STACK
+	gen negtos .
+
+pat com $1==2
+with STACK
+	gen nottos .
+
+pat inc
+with STACK
+	gen addtos {constp8, 1}
+
+pat dec
+with STACK
+	gen subtos {constp8, 1}
+
+pat dup $1==2
+with arith
+	yields %1 %1
+with STACK
+	gen dupstk .
+
+/* group 4: shorthands for the optimizer's output */
+
+pat zrl				leaving loc 0 stl $1
+pat zre				leaving loc 0 ste $1
+pat inl				leaving lol $1 inc stl $1
+pat del				leaving lol $1 dec stl $1
+pat ine				leaving loe $1 inc ste $1
+pat dee				leaving loe $1 dec ste $1
+
+/* group 5: through pointers */
+
+pat loi $1==2
+with STACK
+	gen ldind .
+
+pat lil
+with STACK
+	gen ldpush {local2, $1}
+	    ldind .
+
+pat sti $1==2
+with STACK
+	gen stind .
+	    stnull .
+
+/* group 6: branches */
+
+pat bra
+with STACK
+	gen bra {label, $1}
+
+pat lab
+with STACK
+	gen labeldef $1
+
+pat blt
+with arith STACK
+	gen subtos %1
+	    stnull .
+	    skipge .
+	    bra {label, $1}
+with STACK
+	gen substk .
+	    stnull .
+	    skipge .
+	    bra {label, $1}
+
+pat ble
+with arith STACK
+	gen subtos %1
+	    stnull .
+	    skipgt .
+	    bra {label, $1}
+with STACK
+	gen substk .
+	    stnull .
+	    skipgt .
+	    bra {label, $1}
+
+pat beq
+with arith STACK
+	gen subtos %1
+	    stnull .
+	    skipne .
+	    bra {label, $1}
+with STACK
+	gen substk .
+	    stnull .
+	    skipne .
+	    bra {label, $1}
+
+pat bne
+with arith STACK
+	gen subtos %1
+	    stnull .
+	    skipeq .
+	    bra {label, $1}
+with STACK
+	gen substk .
+	    stnull .
+	    skipeq .
+	    bra {label, $1}
+
+pat bgt
+with arith STACK
+	gen subtos %1
+	    stnull .
+	    skiple .
+	    bra {label, $1}
+with STACK
+	gen substk .
+	    stnull .
+	    skiple .
+	    bra {label, $1}
+
+pat bge
+with arith STACK
+	gen subtos %1
+	    stnull .
+	    skiplt .
+	    bra {label, $1}
+with STACK
+	gen substk .
+	    stnull .
+	    skiplt .
+	    bra {label, $1}
+
+pat zlt
+with STACK
+	gen subtos {constp8, 0}
+	    stnull .
+	    skipge .
+	    bra {label, $1}
+
+pat zle
+with STACK
+	gen subtos {constp8, 0}
+	    stnull .
+	    skipgt .
+	    bra {label, $1}
+
+pat zeq
+with STACK
+	gen subtos {constp8, 0}
+	    stnull .
+	    skipne .
+	    bra {label, $1}
+
+pat zne
+with STACK
+	gen subtos {constp8, 0}
+	    stnull .
+	    skipeq .
+	    bra {label, $1}
+
+pat zgt
+with STACK
+	gen subtos {constp8, 0}
+	    stnull .
+	    skiple .
+	    bra {label, $1}
+
+pat zge
+with STACK
+	gen subtos {constp8, 0}
+	    stnull .
+	    skiplt .
+	    bra {label, $1}
+
+/* group 7: calls */
+
+pat cal
+with STACK
+	gen calla {label, $1}
+
+pat asp $1==0
+pat asp $1>0 && $1<=126
+with STACK
+	gen addpsp {constp8, $1}
+
+pat asp $1<0 && $1>=0-128
+with STACK
+	gen addpsp {constn8, $1}
+
+pat lfr $1==2
+with STACK
+	gen ldmidx .
+
+pat lfr $1==4
+with STACK
+	gen ldmbp .
+	    ldmidx .
+
+pat ret $1==0
+with STACK
+	gen retn0 .
+
+pat ret $1==2
+with STACK
+	gen stmidx .
+	    retn0 .
+
+pat ret $1==4
+with STACK
+	gen stmidx .
+	    stmbp .
+	    retn0 .
+
 pat nop

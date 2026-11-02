@@ -7,6 +7,11 @@
 #define LISTING
 #define RELOCATION
 
+#undef ISALPHA
+#define ISALPHA(c)	(isalpha(c) || c == '_' || c == '.' || c == '~')
+#undef ISALNUM
+#define ISALNUM(c)	(isalnum(c) || c == '_' || c == '.' || c == '~')
+
 #undef ALIGNWORD
 #define ALIGNWORD 2
 #undef ALIGNSECT
