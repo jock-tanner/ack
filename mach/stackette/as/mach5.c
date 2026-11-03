@@ -47,7 +47,7 @@ void emit_gen(int op, int dd, int is_dst)
 			serror("an 8-bit immediate is a word source");
 			return;
 		}
-		if (o >= 4 && o < 8 ? (opnd.field < 0 || opnd.field > 255)
+		if ((o >= 4 && o < 8) || o == 13 ? (opnd.field < 0 || opnd.field > 255)
 				    : (opnd.field < -128 || opnd.field > 127)) {
 			serror("8-bit immediate out of range");
 			return;

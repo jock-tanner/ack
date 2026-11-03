@@ -58,6 +58,8 @@ stpop "st.pop" mem2:wo .
 stnull "st.pop null" .
 addtos "add.tos" arith:ro .
 subtos "sub.tos" arith:ro .
+cmppop "cmp.pop" arith:ro .
+cmpund "cmp.under tos" .
 andtos "and.tos" logic:ro .
 ortos "or.tos" logic:ro .
 xortos "xor.tos" logic:ro .
@@ -236,115 +238,103 @@ with STACK
 
 pat blt
 with arith STACK
-	gen subtos %1
-	    stnull .
+	gen cmppop %1
 	    skipge .
 	    bra {label, $1}
 with STACK
-	gen substk .
+	gen cmpund .
 	    stnull .
 	    skipge .
 	    bra {label, $1}
 
 pat ble
 with arith STACK
-	gen subtos %1
-	    stnull .
+	gen cmppop %1
 	    skipgt .
 	    bra {label, $1}
 with STACK
-	gen substk .
+	gen cmpund .
 	    stnull .
 	    skipgt .
 	    bra {label, $1}
 
 pat beq
 with arith STACK
-	gen subtos %1
-	    stnull .
+	gen cmppop %1
 	    skipne .
 	    bra {label, $1}
 with STACK
-	gen substk .
+	gen cmpund .
 	    stnull .
 	    skipne .
 	    bra {label, $1}
 
 pat bne
 with arith STACK
-	gen subtos %1
-	    stnull .
+	gen cmppop %1
 	    skipeq .
 	    bra {label, $1}
 with STACK
-	gen substk .
+	gen cmpund .
 	    stnull .
 	    skipeq .
 	    bra {label, $1}
 
 pat bgt
 with arith STACK
-	gen subtos %1
-	    stnull .
+	gen cmppop %1
 	    skiple .
 	    bra {label, $1}
 with STACK
-	gen substk .
+	gen cmpund .
 	    stnull .
 	    skiple .
 	    bra {label, $1}
 
 pat bge
 with arith STACK
-	gen subtos %1
-	    stnull .
+	gen cmppop %1
 	    skiplt .
 	    bra {label, $1}
 with STACK
-	gen substk .
+	gen cmpund .
 	    stnull .
 	    skiplt .
 	    bra {label, $1}
 
 pat zlt
 with STACK
-	gen subtos {constp8, 0}
-	    stnull .
+	gen cmppop {constp8, 0}
 	    skipge .
 	    bra {label, $1}
 
 pat zle
 with STACK
-	gen subtos {constp8, 0}
-	    stnull .
+	gen cmppop {constp8, 0}
 	    skipgt .
 	    bra {label, $1}
 
 pat zeq
 with STACK
-	gen subtos {constp8, 0}
-	    stnull .
+	gen cmppop {constp8, 0}
 	    skipne .
 	    bra {label, $1}
 
 pat zne
 with STACK
-	gen subtos {constp8, 0}
-	    stnull .
+	gen cmppop {constp8, 0}
 	    skipeq .
 	    bra {label, $1}
 
 pat zgt
 with STACK
-	gen subtos {constp8, 0}
-	    stnull .
+	gen cmppop {constp8, 0}
 	    skiple .
 	    bra {label, $1}
 
 pat zge
 with STACK
-	gen subtos {constp8, 0}
-	    stnull .
+	gen cmppop {constp8, 0}
 	    skiplt .
 	    bra {label, $1}
 
