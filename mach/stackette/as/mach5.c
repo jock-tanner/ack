@@ -65,6 +65,9 @@ void emit_gen(int op, int dd, int is_dst)
 	case K_PTR:
 		f = 0x16;
 		break;
+	case K_IDX:
+		f = 0x10 | (opnd.field << 1);
+		break;
 	case K_ABS:
 		f = 0x20;
 		break;

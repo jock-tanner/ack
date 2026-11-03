@@ -11,7 +11,7 @@ build_ncg(name="ncg", arch="stackette")
 
 ackcfile(name="boot", srcs=["./boot.s"], plat="stackette")
 
-# The platform libraries (libem, libend, libc, libsys) come later, with the
+# The other platform libraries (libem, libc, libsys) come later, with the
 # code generator that is able to compile them.
 export(
     name="tools",
@@ -26,6 +26,7 @@ export(
     name="all",
     items={
         "$(PLATIND)/stackette/boot.o": ".+boot",
+        "$(PLATIND)/stackette/libend.a": "mach/stackette/libend+lib_stackette",
     },
     deps=[".+tools", "util/ack+all"],
 )

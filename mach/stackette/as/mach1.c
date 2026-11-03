@@ -10,6 +10,7 @@
 #define K_ABS	3	/* [expr]: the word in extra */
 #define K_PFP	4	/* [pfp+expr]: field is the byte offset */
 #define K_PTR	5	/* [tos] */
+#define K_IDX	6	/* [mbp+midx], ++ after, -- before: field is 0, 1, 2 */
 
 typedef struct {
 	short	kind;

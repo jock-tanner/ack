@@ -94,6 +94,18 @@ dest	:	'[' expr ']'
 			{	opnd.kind = K_PTR; opnd.field = 0;
 				if ($2 != 0) serror("only [tos] is a pointer");
 			}
+	|	'[' reg '+' reg ']'
+			{	opnd.kind = K_IDX; opnd.field = 0;
+				if ($2 != 2 || $4 != 3) serror("use [mbp+midx]");
+			}
+	|	'[' reg '+' reg '+' '+' ']'
+			{	opnd.kind = K_IDX; opnd.field = 1;
+				if ($2 != 2 || $4 != 3) serror("use [mbp+midx++]");
+			}
+	|	'[' reg '+' '-' '-' reg ']'
+			{	opnd.kind = K_IDX; opnd.field = 2;
+				if ($2 != 2 || $6 != 3) serror("use [mbp+--midx]");
+			}
 	|	reg
 			{	opnd.kind = K_REG; opnd.field = (short)$1;}
 	;
