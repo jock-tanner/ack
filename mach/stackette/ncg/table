@@ -83,6 +83,26 @@ skipgt "skip gt" .
 skipge "skip ge" .
 retf "retf" imm8:ro .
 addpsp "addp sp," imm8:ro .
+mulop "mulu" .
+divsop "divs" .
+divuop "divu" .
+dropnos "st.under null" .
+ldbtos "ldb.tos [tos]" .
+stbind "stb.under [tos]" .
+ldundind "ld.under [tos]" .
+ldtos "ld.tos" imm8:ro .
+callpop "call pop" .
+sxttos "sxt tos" .
+addundtos "add.tos" imm8:ro .
+skiplo "skip lo" .
+skiphs "skip hs" .
+skiphi "skip hi" .
+skipls "skip ls" .
+ldund "ld.under" imm8:ro .
+ldnos "ld.nos" imm8:ro .
+cmpkeep "cmp.tos" imm8:ro .
+skippl "skip pl" .
+dbltos "add.tos tos" .
 nop .
 
 MOVES
@@ -125,6 +145,7 @@ pat ldl $1>=0-128 && $1<=124 && ($1&1)==0	yields {local2, $1+2} {local2, $1}
 pat loe					yields {ext2, $1}
 pat lde					yields {ext2, $1+2} {ext2, $1}
 pat lae					yields {addr_ext, $1}
+pat lpi					yields {addr_ext, $1}
 pat lal $1>=0-128 && $1<=126 && ($1&1)==0	yields {addr_local, $1}
 
 /* group 2: stores */
@@ -397,5 +418,510 @@ with STACK
 pat ret $1==4
 with STACK
 	gen retf {constp8, 2}
+
+/* group 8: pointers, multiplication and division */
+
+pat adp $1==0
+pat adp $1>0 && $1<=127
+with STACK
+	gen addtos {constp8, $1}
+
+pat adp $1<0 && $1>=0-128
+with STACK
+	gen addtos {constn8, $1}
+
+pat adp
+with STACK
+	gen addtos {const2, $1}
+
+pat ads $1==2			leaving adi 2
+
+pat mli $1==2
+with STACK
+	gen mulop .
+	    dropnos .
+
+pat mlu $1==2			leaving mli 2
+
+pat dvi $1==2
+with STACK
+	gen divsop .
+	    dropnos .
+
+pat rmi $1==2
+with STACK
+	gen divsop .
+	    stnull .
+
+pat dvu $1==2
+with STACK
+	gen divuop .
+	    dropnos .
+
+pat rmu $1==2
+with STACK
+	gen divuop .
+	    stnull .
+
+/* group 9: bytes and longs through pointers */
+
+pat loi $1==1
+with STACK
+	gen ldbtos .
+
+pat sti $1==1
+with STACK
+	gen stbind .
+	    stnull .
+
+pat loi $1==4
+with STACK
+	gen addtos {constp8, 2}
+	    ldundind .
+	    subtos {constp8, 2}
+	    ldind .
+
+pat sti $1==4
+with STACK
+	gen stind .
+	    addtos {constp8, 2}
+	    stind .
+	    stnull .
+
+/* group 10: conversions, the integer sizes 1, 2 and 4 */
+
+pat loc loc cii $1==$2
+pat loc loc cuu $1==$2
+pat loc loc ciu $1==$2
+pat loc loc cui $1==$2
+pat loc loc cii $1==1 && $2==2
+with STACK
+	gen sxttos .
+
+pat loc loc ciu $1==1 && $2==2	leaving loc 1 loc 2 cii
+
+pat loc loc cuu $1==1 && $2==2
+with STACK
+	gen andtos {const2, 255}
+
+pat loc loc cui $1==1 && $2==2	leaving loc 1 loc 2 cuu
+
+pat loc loc cii $1==2 && $2==4
+with STACK
+	gen ldund {constp8, 0}
+	    cmpkeep {constp8, 0}
+	    skippl .
+	    ldnos {constn8, 0-1}
+
+pat loc loc ciu $1==2 && $2==4	leaving loc 2 loc 4 cii
+
+pat loc loc cuu $1==2 && $2==4
+with STACK
+	gen ldund {constp8, 0}
+
+pat loc loc cui $1==2 && $2==4	leaving loc 2 loc 4 cuu
+
+pat loc loc cii $1==4 && $2==2
+with STACK
+	gen dropnos .
+
+pat loc loc cuu $1==4 && $2==2	leaving loc 4 loc 2 cii
+pat loc loc ciu $1==4 && $2==2	leaving loc 4 loc 2 cii
+pat loc loc cui $1==4 && $2==2	leaving loc 4 loc 2 cii
+pat loc loc cii $1==2 && $2==1
+pat loc loc cuu $1==2 && $2==1
+pat loc loc ciu $1==2 && $2==1
+pat loc loc cui $1==2 && $2==1
+
+/* group 11: calls through a pointer */
+
+pat cai asp lfr $3==2
+with STACK
+	gen callpop .
+	yields {onstack, 0}
+
+pat cai asp lfr $3==4
+with STACK
+	gen callpop .
+	yields {onstack, 0} {onstack, 0}
+
+pat cai lfr $2==2
+with STACK
+	gen callpop .
+	yields {onstack, 0}
+
+pat cai lfr $2==4
+with STACK
+	gen callpop .
+	yields {onstack, 0} {onstack, 0}
+
+pat cai asp
+with STACK
+	gen callpop .
+
+pat cai
+with STACK
+	gen callpop .
+
+/* group 12: comparisons of two words that give -1, 0 or 1 are only used to
+   branch or to test, so they are fused with what follows */
+
+pat cmi zlt $1==2
+with arith STACK
+	gen cmppop %1
+	    skipge .
+	    bra {label, $2}
+with STACK
+	gen cmpund .
+	    stnull .
+	    skipge .
+	    bra {label, $2}
+
+pat cmi zle $1==2
+with arith STACK
+	gen cmppop %1
+	    skipgt .
+	    bra {label, $2}
+with STACK
+	gen cmpund .
+	    stnull .
+	    skipgt .
+	    bra {label, $2}
+
+pat cmi zeq $1==2
+with arith STACK
+	gen cmppop %1
+	    skipne .
+	    bra {label, $2}
+with STACK
+	gen cmpund .
+	    stnull .
+	    skipne .
+	    bra {label, $2}
+
+pat cmi zne $1==2
+with arith STACK
+	gen cmppop %1
+	    skipeq .
+	    bra {label, $2}
+with STACK
+	gen cmpund .
+	    stnull .
+	    skipeq .
+	    bra {label, $2}
+
+pat cmi zgt $1==2
+with arith STACK
+	gen cmppop %1
+	    skiple .
+	    bra {label, $2}
+with STACK
+	gen cmpund .
+	    stnull .
+	    skiple .
+	    bra {label, $2}
+
+pat cmi zge $1==2
+with arith STACK
+	gen cmppop %1
+	    skiplt .
+	    bra {label, $2}
+with STACK
+	gen cmpund .
+	    stnull .
+	    skiplt .
+	    bra {label, $2}
+
+pat cmu zlt $1==2
+with arith STACK
+	gen cmppop %1
+	    skiphs .
+	    bra {label, $2}
+with STACK
+	gen cmpund .
+	    stnull .
+	    skiphs .
+	    bra {label, $2}
+
+pat cmu zle $1==2
+with arith STACK
+	gen cmppop %1
+	    skiphi .
+	    bra {label, $2}
+with STACK
+	gen cmpund .
+	    stnull .
+	    skiphi .
+	    bra {label, $2}
+
+pat cmu zeq $1==2
+with arith STACK
+	gen cmppop %1
+	    skipne .
+	    bra {label, $2}
+with STACK
+	gen cmpund .
+	    stnull .
+	    skipne .
+	    bra {label, $2}
+
+pat cmu zne $1==2
+with arith STACK
+	gen cmppop %1
+	    skipeq .
+	    bra {label, $2}
+with STACK
+	gen cmpund .
+	    stnull .
+	    skipeq .
+	    bra {label, $2}
+
+pat cmu zgt $1==2
+with arith STACK
+	gen cmppop %1
+	    skipls .
+	    bra {label, $2}
+with STACK
+	gen cmpund .
+	    stnull .
+	    skipls .
+	    bra {label, $2}
+
+pat cmu zge $1==2
+with arith STACK
+	gen cmppop %1
+	    skiplo .
+	    bra {label, $2}
+with STACK
+	gen cmpund .
+	    stnull .
+	    skiplo .
+	    bra {label, $2}
+
+/* t: 1 or 0 from the flags */
+
+pat cmi tlt $1==2
+with arith STACK
+	gen cmppop %1
+	    ldpush {constp8, 1}
+	    skiplt .
+	    ldtos {constp8, 0}
+with STACK
+	gen cmpund .
+	    stnull .
+	    ldpush {constp8, 1}
+	    skiplt .
+	    ldtos {constp8, 0}
+
+pat cmi tle $1==2
+with arith STACK
+	gen cmppop %1
+	    ldpush {constp8, 1}
+	    skiple .
+	    ldtos {constp8, 0}
+with STACK
+	gen cmpund .
+	    stnull .
+	    ldpush {constp8, 1}
+	    skiple .
+	    ldtos {constp8, 0}
+
+pat cmi teq $1==2
+with arith STACK
+	gen cmppop %1
+	    ldpush {constp8, 1}
+	    skipeq .
+	    ldtos {constp8, 0}
+with STACK
+	gen cmpund .
+	    stnull .
+	    ldpush {constp8, 1}
+	    skipeq .
+	    ldtos {constp8, 0}
+
+pat cmi tne $1==2
+with arith STACK
+	gen cmppop %1
+	    ldpush {constp8, 1}
+	    skipne .
+	    ldtos {constp8, 0}
+with STACK
+	gen cmpund .
+	    stnull .
+	    ldpush {constp8, 1}
+	    skipne .
+	    ldtos {constp8, 0}
+
+pat cmi tgt $1==2
+with arith STACK
+	gen cmppop %1
+	    ldpush {constp8, 1}
+	    skipgt .
+	    ldtos {constp8, 0}
+with STACK
+	gen cmpund .
+	    stnull .
+	    ldpush {constp8, 1}
+	    skipgt .
+	    ldtos {constp8, 0}
+
+pat cmi tge $1==2
+with arith STACK
+	gen cmppop %1
+	    ldpush {constp8, 1}
+	    skipge .
+	    ldtos {constp8, 0}
+with STACK
+	gen cmpund .
+	    stnull .
+	    ldpush {constp8, 1}
+	    skipge .
+	    ldtos {constp8, 0}
+
+pat cmu tlt $1==2
+with arith STACK
+	gen cmppop %1
+	    ldpush {constp8, 1}
+	    skiplo .
+	    ldtos {constp8, 0}
+with STACK
+	gen cmpund .
+	    stnull .
+	    ldpush {constp8, 1}
+	    skiplo .
+	    ldtos {constp8, 0}
+
+pat cmu tle $1==2
+with arith STACK
+	gen cmppop %1
+	    ldpush {constp8, 1}
+	    skipls .
+	    ldtos {constp8, 0}
+with STACK
+	gen cmpund .
+	    stnull .
+	    ldpush {constp8, 1}
+	    skipls .
+	    ldtos {constp8, 0}
+
+pat cmu teq $1==2
+with arith STACK
+	gen cmppop %1
+	    ldpush {constp8, 1}
+	    skipeq .
+	    ldtos {constp8, 0}
+with STACK
+	gen cmpund .
+	    stnull .
+	    ldpush {constp8, 1}
+	    skipeq .
+	    ldtos {constp8, 0}
+
+pat cmu tne $1==2
+with arith STACK
+	gen cmppop %1
+	    ldpush {constp8, 1}
+	    skipne .
+	    ldtos {constp8, 0}
+with STACK
+	gen cmpund .
+	    stnull .
+	    ldpush {constp8, 1}
+	    skipne .
+	    ldtos {constp8, 0}
+
+pat cmu tgt $1==2
+with arith STACK
+	gen cmppop %1
+	    ldpush {constp8, 1}
+	    skiphi .
+	    ldtos {constp8, 0}
+with STACK
+	gen cmpund .
+	    stnull .
+	    ldpush {constp8, 1}
+	    skiphi .
+	    ldtos {constp8, 0}
+
+pat cmu tge $1==2
+with arith STACK
+	gen cmppop %1
+	    ldpush {constp8, 1}
+	    skiphs .
+	    ldtos {constp8, 0}
+with STACK
+	gen cmpund .
+	    stnull .
+	    ldpush {constp8, 1}
+	    skiphs .
+	    ldtos {constp8, 0}
+
+pat tlt
+with STACK
+	gen cmppop {constp8, 0}
+	    ldpush {constp8, 1}
+	    skiplt .
+	    ldtos {constp8, 0}
+
+pat tle
+with STACK
+	gen cmppop {constp8, 0}
+	    ldpush {constp8, 1}
+	    skiple .
+	    ldtos {constp8, 0}
+
+pat teq
+with STACK
+	gen cmppop {constp8, 0}
+	    ldpush {constp8, 1}
+	    skipeq .
+	    ldtos {constp8, 0}
+
+pat tne
+with STACK
+	gen cmppop {constp8, 0}
+	    ldpush {constp8, 1}
+	    skipne .
+	    ldtos {constp8, 0}
+
+pat tgt
+with STACK
+	gen cmppop {constp8, 0}
+	    ldpush {constp8, 1}
+	    skipgt .
+	    ldtos {constp8, 0}
+
+pat tge
+with STACK
+	gen cmppop {constp8, 0}
+	    ldpush {constp8, 1}
+	    skipge .
+	    ldtos {constp8, 0}
+
+/* group 13: shifts are done by library routines that take the count on
+   top of the value and leave the result on the stack */
+
+pat loc sli $1==1 && $2==2
+with STACK
+	gen dbltos .
+
+pat loc sli $1==2 && $2==2	leaving loc 1 sli 2 loc 1 sli 2
+pat loc sli $1==3 && $2==2	leaving loc 1 sli 2 loc 1 sli 2 loc 1 sli 2
+
+pat sli $1==2
+with STACK
+	gen calla {label, ".sli2"}
+	yields {onstack, 0}
+
+pat sri $1==2
+with STACK
+	gen calla {label, ".sri2"}
+	yields {onstack, 0}
+
+pat sru $1==2
+with STACK
+	gen calla {label, ".sru2"}
+	yields {onstack, 0}
+
 
 pat nop

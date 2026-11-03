@@ -16,6 +16,11 @@ operation
 			}
 	|	BRAOP expr
 			{	emit_branch($1, $2);}
+	|	BRAOP DDONLY
+			{	if (($1 & 0xffff) != 0xf000 || $2 != 2)
+					serror("only call pop");
+				emit2(0xf9c0);
+			}
 	|	GENOP dd ',' src
 			{	emit_gen($1, $2, 0);}
 	|	STOP dest ',' dd
