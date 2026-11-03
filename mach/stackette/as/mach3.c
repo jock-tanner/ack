@@ -104,6 +104,10 @@
 {0,	UNOP,		20,		"rlc.b"},
 {0,	UNOP,		5,		"rrc"},
 {0,	UNOP,		21,		"rrc.b"},
+{0,	UNOP,		6,		"shr"},
+{0,	UNOP,		22,		"shr.b"},
+{0,	UNOP,		7,		"sar"},
+{0,	UNOP,		23,		"sar.b"},
 
 /* short forms for the code generator: op.dd src, st.dd dst, lea.dd [pfp+n];
  * the value is the instruction value | dd << 8 */

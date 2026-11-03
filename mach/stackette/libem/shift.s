@@ -9,6 +9,9 @@
 .define .sli2
 .define .sri2
 .define .sru2
+.define .sli4
+.define .sri4
+.define .sru4
 
 .sect .text
 
@@ -65,3 +68,61 @@ sru2_loop:
 sru2_done:
 	st null, pop
 	retf $1
+
+! Shifts of a long (low word on top) by a variable count: two instructions
+! per bit. The count is in MIDX so that both words are on top of the stack.
+! Parameters: the count, then the low word, then the high word (3 words),
+! the result is a long.
+.sli4:
+	frame 0, 6
+	ld push, [pfp+4]
+	ld push, [pfp+2]
+	ld push, [pfp+0]
+	st midx, pop
+sli4_loop:
+	ld push, midx
+	cmp pop, $0
+	skip ne
+	bra sli4_done
+	add tos, tos
+	adc nos, nos
+	addp midx, $-1
+	bra sli4_loop
+sli4_done:
+	retf $2
+
+.sru4:
+	frame 0, 6
+	ld push, [pfp+4]
+	ld push, [pfp+2]
+	ld push, [pfp+0]
+	st midx, pop
+sru4_loop:
+	ld push, midx
+	cmp pop, $0
+	skip ne
+	bra sru4_done
+	shr nos
+	rrc tos
+	addp midx, $-1
+	bra sru4_loop
+sru4_done:
+	retf $2
+
+.sri4:
+	frame 0, 6
+	ld push, [pfp+4]
+	ld push, [pfp+2]
+	ld push, [pfp+0]
+	st midx, pop
+sri4_loop:
+	ld push, midx
+	cmp pop, $0
+	skip ne
+	bra sri4_done
+	sar nos
+	rrc tos
+	addp midx, $-1
+	bra sri4_loop
+sri4_done:
+	retf $2

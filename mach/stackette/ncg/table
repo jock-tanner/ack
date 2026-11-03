@@ -103,6 +103,13 @@ ldnos "ld.nos" imm8:ro .
 cmpkeep "cmp.tos" imm8:ro .
 skippl "skip pl" .
 dbltos "add.tos tos" .
+shrtos "shr tos" .
+sartos "sar tos" .
+shrnos "shr nos" .
+sarnos "sar nos" .
+rrctos "rrc tos" .
+adcnos "adc.nos nos" .
+bswaptos "bswap tos" .
 nop .
 
 MOVES
@@ -901,12 +908,78 @@ with STACK
 /* group 13: shifts are done by library routines that take the count on
    top of the value and leave the result on the stack */
 
+/* constant shifts are done in line when they are short */
+
 pat loc sli $1==1 && $2==2
 with STACK
 	gen dbltos .
 
 pat loc sli $1==2 && $2==2	leaving loc 1 sli 2 loc 1 sli 2
 pat loc sli $1==3 && $2==2	leaving loc 1 sli 2 loc 1 sli 2 loc 1 sli 2
+pat loc sli $1==4 && $2==2	leaving loc 2 sli 2 loc 2 sli 2
+
+pat loc sli $1==8 && $2==2
+with STACK
+	gen bswaptos .
+	    andtos {const2, 0-256}
+
+pat loc sru $1==1 && $2==2
+with STACK
+	gen shrtos .
+
+pat loc sru $1==2 && $2==2	leaving loc 1 sru 2 loc 1 sru 2
+pat loc sru $1==3 && $2==2	leaving loc 1 sru 2 loc 1 sru 2 loc 1 sru 2
+pat loc sru $1==4 && $2==2	leaving loc 2 sru 2 loc 2 sru 2
+
+pat loc sru $1==8 && $2==2
+with STACK
+	gen bswaptos .
+	    andtos {const2, 255}
+
+pat loc sri $1==1 && $2==2
+with STACK
+	gen sartos .
+
+pat loc sri $1==2 && $2==2	leaving loc 1 sri 2 loc 1 sri 2
+pat loc sri $1==3 && $2==2	leaving loc 1 sri 2 loc 1 sri 2 loc 1 sri 2
+pat loc sri $1==4 && $2==2	leaving loc 2 sri 2 loc 2 sri 2
+
+pat loc sri $1==8 && $2==2
+with STACK
+	gen bswaptos .
+	    sxttos .
+
+/* a long has its low word on top: two instructions per bit */
+
+pat loc sli $1==1 && $2==4
+with STACK
+	gen dbltos .
+	    adcnos .
+
+pat loc sli $1==2 && $2==4	leaving loc 1 sli 4 loc 1 sli 4
+pat loc sli $1==3 && $2==4	leaving loc 1 sli 4 loc 1 sli 4 loc 1 sli 4
+pat loc sli $1==4 && $2==4	leaving loc 2 sli 4 loc 2 sli 4
+
+pat loc sru $1==1 && $2==4
+with STACK
+	gen shrnos .
+	    rrctos .
+
+pat loc sru $1==2 && $2==4	leaving loc 1 sru 4 loc 1 sru 4
+pat loc sru $1==3 && $2==4	leaving loc 1 sru 4 loc 1 sru 4 loc 1 sru 4
+pat loc sru $1==4 && $2==4	leaving loc 2 sru 4 loc 2 sru 4
+
+pat loc sri $1==1 && $2==4
+with STACK
+	gen sarnos .
+	    rrctos .
+
+pat loc sri $1==2 && $2==4	leaving loc 1 sri 4 loc 1 sri 4
+pat loc sri $1==3 && $2==4	leaving loc 1 sri 4 loc 1 sri 4 loc 1 sri 4
+pat loc sri $1==4 && $2==4	leaving loc 2 sri 4 loc 2 sri 4
+
+pat slu $1==2			leaving sli 2
+pat slu $1==4			leaving sli 4
 
 pat sli $1==2
 with STACK
@@ -922,6 +995,21 @@ pat sru $1==2
 with STACK
 	gen calla {label, ".sru2"}
 	yields {onstack, 0}
+
+pat sli $1==4
+with STACK
+	gen calla {label, ".sli4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat sri $1==4
+with STACK
+	gen calla {label, ".sri4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat sru $1==4
+with STACK
+	gen calla {label, ".sru4"}
+	yields {onstack, 0} {onstack, 0}
 
 
 pat nop
