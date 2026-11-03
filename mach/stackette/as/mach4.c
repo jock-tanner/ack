@@ -99,6 +99,11 @@ dest	:	'[' expr ']'
 			{	opnd.kind = K_PTR; opnd.field = 0;
 				if ($2 != 0) serror("only [tos] is a pointer");
 			}
+	|	'[' reg '+' absexp ']'
+			{	opnd.kind = K_SP; opnd.field = (short)$4;
+				if ($2 != 4) serror("only [sp+k]");
+				if ($4 < 0 || $4 > 31) serror("[sp+k]: k is 0..31");
+			}
 	|	'[' reg '+' reg ']'
 			{	opnd.kind = K_IDX; opnd.field = 0;
 				if ($2 != 2 || $4 != 3) serror("use [mbp+midx]");

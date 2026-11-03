@@ -109,7 +109,24 @@ shrnos "shr nos" .
 sarnos "sar nos" .
 rrctos "rrc tos" .
 adcnos "adc.nos nos" .
+adcnosop "adc.nos" arith:ro .
+sbcnosop "sbc.nos" arith:ro .
+andnosop "and.nos" logic:ro .
+ornosop "or.nos" logic:ro .
+xornosop "xor.nos" logic:ro .
+notnos "not nos" .
+addtos2 "add.tos [sp+2]" .
+adcnos3 "adc.nos [sp+3]" .
+andtos2 "and.tos [sp+2]" .
+andnos3 "and.nos [sp+3]" .
+ortos2 "or.tos [sp+2]" .
+ornos3 "or.nos [sp+3]" .
+xortos2 "xor.tos [sp+2]" .
+xornos3 "xor.nos [sp+3]" .
+stlo "st [sp+2], tos" .
+sthi "st [sp+3], nos" .
 bswaptos "bswap tos" .
+ldsp1 "ld.push [sp+1]" .
 nop .
 
 MOVES
@@ -228,6 +245,126 @@ with arith
 	yields %1 %1
 with STACK
 	gen dupstk .
+
+/* group 3b: arithmetic and logic on longs; low word on top */
+
+pat adi $1==4
+with arith arith STACK
+	gen addtos %1
+	    adcnosop %2
+with STACK
+	gen addtos2 .
+	    adcnos3 .
+	    stlo .
+	    sthi .
+	    addpsp {constp8, 4}
+
+pat sbi $1==4
+with arith arith STACK
+	gen subtos %1
+	    sbcnosop %2
+with STACK
+	gen notnos .
+	    negtos .
+	    adcnosop {constp8, 0}
+	    addtos2 .
+	    adcnos3 .
+	    stlo .
+	    sthi .
+	    addpsp {constp8, 4}
+
+pat and $1==4
+with logic logic STACK
+	gen andtos %1
+	    andnosop %2
+with STACK
+	gen andtos2 .
+	    andnos3 .
+	    stlo .
+	    sthi .
+	    addpsp {constp8, 4}
+
+pat ior $1==4
+with logic logic STACK
+	gen ortos %1
+	    ornosop %2
+with STACK
+	gen ortos2 .
+	    ornos3 .
+	    stlo .
+	    sthi .
+	    addpsp {constp8, 4}
+
+pat xor $1==4
+with logic logic STACK
+	gen xortos %1
+	    xornosop %2
+with STACK
+	gen xortos2 .
+	    xornos3 .
+	    stlo .
+	    sthi .
+	    addpsp {constp8, 4}
+
+pat ngi $1==4
+with STACK
+	gen notnos .
+	    negtos .
+	    adcnosop {constp8, 0}
+
+pat com $1==4
+with STACK
+	gen nottos .
+	    notnos .
+
+/* longs: multiply, divide and compare are library calls, a, b on the stack */
+
+pat mli $1==4
+with STACK
+	gen calla {label, ".mli4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat mlu $1==4			leaving mli 4
+
+pat dvi $1==4
+with STACK
+	gen calla {label, ".dvi4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat dvu $1==4
+with STACK
+	gen calla {label, ".dvu4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat rmi $1==4
+with STACK
+	gen calla {label, ".rmi4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat rmu $1==4
+with STACK
+	gen calla {label, ".rmu4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat cmi $1==4
+with STACK
+	gen calla {label, ".cmi4"}
+	yields {onstack, 0}
+
+pat cmu $1==4
+with STACK
+	gen calla {label, ".cmu4"}
+	yields {onstack, 0}
+
+pat cms $1==2			leaving sbi 2
+pat cms $1==4			leaving cmu 4
+
+pat dup $1==4
+with arith arith
+	yields %2 %1 %2 %1
+with STACK
+	gen ldsp1 .
+	    ldsp1 .
 
 /* group 4: shorthands for the optimizer's output */
 
