@@ -638,6 +638,18 @@ void EVAL(struct expr* expr, int val, int code, label true_label, label false_la
 						else
 							C_lfr(ATW(tp->tp_size));
 					}
+					else
+					{
+						/* the result is not wanted, but a callee that pops its
+						   own parameters leaves it on the stack: fetch and drop it */
+						arith rs = is_struct_or_union(tp->tp_fund) ? pointer_size : ATW(tp->tp_size);
+
+						if (rs > (arith)0)
+						{
+							C_lfr(rs);
+							C_asp(rs);
+						}
+					}
 					if (tp->tp_fund == FLOAT || tp->tp_fund == DOUBLE || tp->tp_fund == LNGDBL)
 						fp_used = 1;
 					/* ??? set filename and line number ??? */

@@ -403,6 +403,43 @@ pat ldf				leaving adp $1 loi 4
 pat stf				leaving adp $1 sti 2
 pat sdf				leaving adp $1 sti 4
 
+/* unsigned and pointer arithmetic is the same as signed */
+
+pat adu				leaving adi $1
+pat sbu				leaving sbi $1
+pat sbs $1==2			leaving sbi 2
+pat cmp				leaving cmu 2
+pat sil				leaving lol $1 sti 2
+
+/* locals out of the reach of an offset field: through an address. The base
+   is [pfp-2], which a variadic frame does not move */
+
+pat lal $1<0-128 || $1>126
+with STACK
+	gen leapush {addr_local, 0-2}
+	    addtos {const2, $1+2}
+	yields {onstack, 0}
+
+pat lal $1>=0-127 && $1<=125 && ($1&1)==1
+with STACK
+	gen leapush {addr_local, $1-1}
+	    addtos {constp8, 1}
+	yields {onstack, 0}
+
+pat asp $1>126			leaving asp 126 asp $1-126
+pat asp $1<0-128		leaving asp 0-128 asp $1+128
+
+pat lol $1<0-128 || $1>126	leaving lal $1 loi 2
+pat ldl $1<0-128 || $1>124	leaving lal $1 loi 4
+pat stl $1<0-128 || $1>126	leaving lal $1 sti 2
+pat sdl $1<0-128 || $1>124	leaving lal $1 sti 4
+pat lil $1<0-128 || $1>126	leaving lol $1 loi 2
+
+/* the trap ignore mask is not used */
+pat sim
+with STACK
+	gen stnull .
+
 pat dup $1==4
 with arith arith
 	yields %2 %1 %2 %1
@@ -425,7 +462,7 @@ pat loi $1==2
 with STACK
 	gen ldind .
 
-pat lil
+pat lil $1>=0-128 && $1<=126
 with STACK
 	gen ldpush {local2, $1}
 	    ldind .

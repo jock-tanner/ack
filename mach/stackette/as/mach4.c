@@ -38,9 +38,7 @@ operation
 	|	ADDPOP reg ',' '$' absexp
 			{	if ($2 < 2 || $2 > 4)
 					serror("addp: mbp, midx or sp");
-				if ($5 < -128 || $5 > 127)
-					serror("addp: -128..127");
-				emit2($1 | (($2 - 2) << 8) | ($5 & 0xff));
+				emit_addp((int)$1, (int)$2, (int)$5);
 			}
 	|	RETNOP '$' absexp
 			{	if ($3 < 0 || $3 > 63)

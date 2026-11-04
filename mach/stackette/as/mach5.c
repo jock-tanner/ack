@@ -136,6 +136,21 @@ void emit_branch(int word, expr_t e)
 }
 
 /*
+ * addp: the immediate is -128..127 bytes, bigger values take several
+ * instructions
+ */
+void emit_addp(int base, int reg, int bytes)
+{
+	while (bytes > 126 || bytes < -128) {
+		int part = bytes > 0 ? 126 : -128;
+
+		emit2(base | ((reg - 2) << 8) | (part & 0xff));
+		bytes -= part;
+	}
+	emit2(base | ((reg - 2) << 8) | (bytes & 0xff));
+}
+
+/*
  * The epilogue of a variadic function: the caller has put n = parameter
  * words - r at [pfp+0], and the result goes to [pfp+2n] through a pointer.
  * The variadic ret takes n from [pfp+0] too.
@@ -156,12 +171,8 @@ static void emit_retv(int words)
 		}
 		emit2((2 << 14) | (OP_ST << 10) | (2 << 8) | 5);
 	}
-	if (frm_loc < -128 || frm_loc > 127) {
-		serror("retf: frame too big");
-		return;
-	}
 	if (frm_loc)
-		emit2(0xd400 | (2 << 8) | (frm_loc & 0xff));
+		emit_addp(0xd400, 4, frm_loc);
 	emit2(0xfa40);
 }
 
@@ -187,12 +198,8 @@ void emit_retf(int words)
 	for (i = 0; i < words; i++)
 		emit2((FMT_PFP << 14) | (OP_ST << 10) | (2 << 8) |
 			pfp_field(base + 2 * i));
-	if (free_bytes < -128 || free_bytes > 127) {
-		serror("retf: frame too big");
-		return;
-	}
 	if (free_bytes)
-		emit2(0xd400 | (2 << 8) | (free_bytes & 0xff));
+		emit_addp(0xd400, 4, free_bytes);
 	if (n < 0)
 		n = 0;
 	if (n > 63) {

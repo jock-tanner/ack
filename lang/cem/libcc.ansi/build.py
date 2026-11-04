@@ -26,6 +26,30 @@ simplerule(
 )
 
 
+# Platforms without floating point leave out what needs it; setjmp needs to
+# set the return stack pointer, which the Stackette cannot do yet.
+NOFLOAT_PLATS = {"stackette"}
+FLOAT_SRCS = (
+    "/math/",
+    "/strtod.c",
+    "/atof.c",
+    "/ext_comp.c",
+    "/difftime.c",
+    "/sleep.c",
+    "/setjmp.e",
+)
+
+
+def libc_srcs(plat, srcs):
+    if plat not in NOFLOAT_PLATS:
+        return srcs
+    return [
+        s
+        for s in srcs
+        if not any(f in s for f in FLOAT_SRCS) or s.endswith("localmath.h")
+    ]
+
+
 for plat in PLATS:
     crt = ackcfile(
         name=f"crt_{plat}", srcs=["./head_ac.e"], plat=plat, deps=["h"]
@@ -34,7 +58,7 @@ for plat in PLATS:
     libc = ackclibrary(
         name=f"lib_{plat}",
         plat=plat,
-        srcs=[
+        srcs=libc_srcs(plat, [
             ".+ctype_tab",
             ".+ctype_files",
             "./core/ctype/tolower.c",
@@ -201,7 +225,7 @@ for plat in PLATS:
             "./sys/stdio/tmpfile.c",
             "./sys/stdio/tmpnam.c",
             "./sys/stdio/ungetc.c",
-        ],
+        ]),
         deps=["lang/cem/libcc.ansi/headers"],
     )
 

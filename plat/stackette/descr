@@ -21,9 +21,10 @@ var PLATFORM=stackette
 var PLATFORMDIR={EM}/share/ack/{PLATFORM}
 var CPP_F=-D__unix
 var ALIGN=-a0:2 -a1:2 -a2:2 -a3:2
-# text and rom stay in flash from address 0; the data (then the bss) lives in
-# RAM from 0x1000, and boot.s copies its image from the flash address endrom
-var DATABASE=-b2:0x1000
+# text and rom stay in flash from address 0 (boot.s maps the pages below the
+# data to the flash); the data (then the bss) lives in RAM from 0x4000, and
+# boot.s copies its image from the flash address endrom
+var DATABASE=-b2:0x4000
 
 # Override the setting in fe so that files compiled for linux386 can see
 # the platform-specific headers.
