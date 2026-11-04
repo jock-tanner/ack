@@ -22,6 +22,7 @@ typedef struct {
 extern opnd_t opnd;
 
 /* the opcodes of the two-operand instructions */
+#define OP_ADD	0
 #define OP_LD	8
 #define OP_ST	9
 #define OP_LEA	11
@@ -36,4 +37,5 @@ void emit_branch(int word, expr_t e);
  */
 extern int frm_loc;
 extern int frm_par;
+extern int frm_var;
 void emit_retf(int words);

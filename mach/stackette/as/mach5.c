@@ -30,6 +30,15 @@ static int pfp_field(int n)
 }
 
 /*
+ * In the frame of a variadic function the parameter count is at [pfp+0], so
+ * the named parameters (non-negative offsets) are two bytes higher.
+ */
+static int par_off(int n)
+{
+	return frm_var && n >= 0 ? n + 2 : n;
+}
+
+/*
  * ld and the ALU operations: `op` has the opcode in the low 4 bits and the
  * byte form in bit 4; `dd` is the stack part; the operand is in `opnd`.
  * st: the same, with the operand as the destination (`is_dst`).
@@ -56,7 +65,7 @@ void emit_gen(int op, int dd, int is_dst)
 		return;
 	case K_PFP:
 		w = (FMT_PFP << 14) | (o << 10) | (dd << 8) | (s << 7) |
-			pfp_field(opnd.field);
+			pfp_field(par_off(opnd.field));
 		emit2(w);
 		return;
 	case K_REG:
@@ -97,7 +106,7 @@ void emit_gen(int op, int dd, int is_dst)
 void emit_lea(int dd)
 {
 	emit2((FMT_PFP << 14) | (OP_LEA << 10) | (dd << 8) |
-		pfp_field(opnd.field));
+		pfp_field(par_off(opnd.field)));
 }
 
 /*
@@ -127,6 +136,36 @@ void emit_branch(int word, expr_t e)
 }
 
 /*
+ * The epilogue of a variadic function: the caller has put n = parameter
+ * words - r at [pfp+0], and the result goes to [pfp+2n] through a pointer.
+ * The variadic ret takes n from [pfp+0] too.
+ */
+static void emit_retv(int words)
+{
+	int i;
+
+	if (words > 0) {
+		emit2((FMT_PFP << 14) | (OP_LEA << 10) | (2 << 8) | pfp_field(0));
+		emit2((FMT_PFP << 14) | (OP_LD << 10) | (2 << 8) | pfp_field(0));
+		emit2((2 << 14) | (OP_ADD << 10) | (0 << 8) | 0);
+		emit2((2 << 14) | (OP_ADD << 10) | (2 << 8) | 0);
+		for (i = 0; i < words; i++) {
+			emit2((2 << 14) | (OP_ST << 10) | (3 << 8) | 0x16);
+			if (i < words - 1)
+				emit2((OP_ADD << 10) | 2);
+		}
+		emit2((2 << 14) | (OP_ST << 10) | (2 << 8) | 5);
+	}
+	if (frm_loc < -128 || frm_loc > 127) {
+		serror("retf: frame too big");
+		return;
+	}
+	if (frm_loc)
+		emit2(0xd400 | (2 << 8) | (frm_loc & 0xff));
+	emit2(0xfa40);
+}
+
+/*
  * retf $r: the epilogue of a function that returns r words on the stack.
  * The result goes to [pfp+2n], n = parameter words - r, the locals are
  * released, and ret #n drops the rest of the parameters. If the result is
@@ -139,6 +178,10 @@ void emit_retf(int words)
 	int free_bytes = frm_loc;
 	int i;
 
+	if (frm_var) {
+		emit_retv(words);
+		return;
+	}
 	if (n < 0)
 		free_bytes -= 2 * words - frm_par;
 	for (i = 0; i < words; i++)

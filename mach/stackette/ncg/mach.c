@@ -80,8 +80,13 @@ void mes(word type)
 			}
 		case ms_par:
 			getarg(cst_ptyp);
-			fprintf(codefile, "\tframe %ld, %ld\n", frame_locals,
-				(long)argval);
+			/* a variadic function has the parameter size negated */
+			if (argval < 0)
+				fprintf(codefile, "\tframev %ld, %ld\n", frame_locals,
+					(long)-argval);
+			else
+				fprintf(codefile, "\tframe %ld, %ld\n", frame_locals,
+					(long)argval);
 			while (getarg(any_ptyp) != sp_cend)
 				;
 			break;

@@ -21,6 +21,7 @@
 #include "idf.h"
 #include "arith.h"
 #include "type.h"
+#include "proto.h"
 #include "label.h"
 #include "code.h"
 #include "stmt.h"
@@ -231,6 +232,7 @@ static label return_label, return2_label;
 static char return_expr_occurred;
 static arith func_size;
 static int struct_return;
+static int func_variadic;
 static char* last_fn_given = (char*)0;
 static label file_name_label;
 
@@ -282,6 +284,14 @@ void begin_proc(struct decspecs* ds, struct idf* idf) /* to be called when enter
 		def->df_type = error_type;
 	}
 	func_type = def->df_type->tp_up;
+	{ /* the parameter list of the definition ends in an ellipsis? */
+		struct proto* pl;
+
+		func_variadic = 0;
+		for (pl = def->df_type->tp_proto; pl; pl = pl->next)
+			if (pl->pl_flag & PL_ELLIPSIS)
+				func_variadic = 1;
+	}
 #ifdef LINT
 	func_notypegiven = ds->ds_notypegiven;
 #endif
@@ -396,7 +406,8 @@ void end_proc(arith fbytes)
 	{
 		error("%s has more than %ld parameter bytes", func_name, (long)max_int);
 	}
-	C_ms_par(fbytes); /* # bytes for formals		*/
+	/* # bytes for formals, negated for a function with an ellipsis	*/
+	C_ms_par(func_variadic ? -fbytes : fbytes);
 	if (sp_occurred[SP_SETJMP])
 	{ /* indicate use of "__setjmp"	*/
 		options['n'] = 1;

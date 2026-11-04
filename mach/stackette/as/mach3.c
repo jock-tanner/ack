@@ -78,6 +78,7 @@
 {0,	ADDPOP,		0xd400,		"addp"},
 {0,	RETNOP,		0xf840,		"retn"},
 {0,	FRAMEOP,	0,		"frame"},
+{0,	FRAMEOP,	1,		"framev"},
 {0,	RETFOP,		0,		"retf"},
 {0,	BITOP,		0xd000,		"setb"},
 {0,	BITOP,		0xd100,		"clrb"},

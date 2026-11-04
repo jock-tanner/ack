@@ -21,6 +21,7 @@
 #include "idf.h"
 #include "arith.h"
 #include "type.h"
+#include "proto.h"
 #include "label.h"
 #include "code.h"
 #include "def.h"
@@ -538,7 +539,30 @@ void EVAL(struct expr* expr, int val, int code, label true_label, label false_la
 					arith ParSize = (arith)0;
 					label setjmp_label = 0;
 					arith retspace = 0;
+					int variadic = 0;
+					arith rwords = 0;
 
+					{ /* a call of a function with an ellipsis in its prototype */
+						struct proto* pl;
+
+						if (left->ex_type->tp_fund == FUNCTION)
+							for (pl = left->ex_type->tp_proto; pl; pl = pl->next)
+								if (pl->pl_flag & PL_ELLIPSIS)
+									variadic = 1;
+					}
+					if (variadic)
+					{
+						/* the callee gets the number of words in its argument
+						   area less the result words, on top of the arguments,
+						   and a pad word below them when the result is bigger
+						   than a word: it must not overwrite the count */
+						rwords = is_struct_or_union(tp->tp_fund) ? 1 : ATW(tp->tp_size) / word_size;
+						if (rwords >= 2)
+						{
+							C_loc((arith)0);
+							ParSize += word_size;
+						}
+					}
 					if (ISNAME(left))
 					{
 						if (left->VL_IDF->id_special == SP_SETJMP)
@@ -570,6 +594,11 @@ void EVAL(struct expr* expr, int val, int code, label true_label, label false_la
 						retspace = NewLocal(tp->tp_size, tp->tp_align, -1, 0);
 						C_lal(retspace);
 						ParSize += pointer_size;
+					}
+					if (variadic)
+					{
+						C_loc(ParSize / word_size + 1 - rwords);
+						ParSize += word_size;
 					}
 					if (ISNAME(left))
 					{

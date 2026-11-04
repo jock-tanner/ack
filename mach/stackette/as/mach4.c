@@ -48,7 +48,7 @@ operation
 				emit2($1 | ($3 & 63));
 			}
 	|	FRAMEOP absexp ',' absexp
-			{	frm_loc = (int)$2; frm_par = (int)$4;}
+			{	frm_loc = (int)$2; frm_par = (int)$4; frm_var = (int)$1;}
 	|	RETFOP '$' absexp
 			{	emit_retf((int)$3);}
 	|	BITOP '$' absexp

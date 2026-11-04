@@ -398,6 +398,11 @@ pat bls $1==2
 with STACK
 	gen calla {label, ".blm"}
 
+pat lof				leaving adp $1 loi 2
+pat ldf				leaving adp $1 loi 4
+pat stf				leaving adp $1 sti 2
+pat sdf				leaving adp $1 sti 4
+
 pat dup $1==4
 with arith arith
 	yields %2 %1 %2 %1
