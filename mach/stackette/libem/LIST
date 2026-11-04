@@ -2,3 +2,4 @@ libem_s.a
 shift.s
 long.s
 switch.s
+blm.s

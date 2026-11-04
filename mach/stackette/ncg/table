@@ -368,6 +368,36 @@ pat csb $1==2
 with STACK
 	gen jmpl {label, ".csb2"}
 
+/* structs and blocks: loads and stores of more than 4 bytes, one word at a
+   time, the last word first so that the low word ends up on top */
+
+pat loi $1>4 && ($1&1)==0
+with STACK
+	gen addtos {const2, $1-2}
+	    ldundind .
+	    subtos {const2, $1-2}
+	leaving loi $1-2
+
+pat sti $1>4 && ($1&1)==0
+with STACK
+	gen stind .
+	    addtos {constp8, 2}
+	leaving sti $1-2
+
+/* blm n, bls: the destination is on top, then the source; the helper wants
+   the byte count on top of both */
+
+pat blm $1==0			leaving asp 4
+
+pat blm $1>0
+with STACK
+	gen ldpush {const2, $1}
+	    calla {label, ".blm"}
+
+pat bls $1==2
+with STACK
+	gen calla {label, ".blm"}
+
 pat dup $1==4
 with arith arith
 	yields %2 %1 %2 %1
