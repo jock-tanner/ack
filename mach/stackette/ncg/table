@@ -127,6 +127,7 @@ stlo "st [sp+2], tos" .
 sthi "st [sp+3], nos" .
 bswaptos "bswap tos" .
 ldsp1 "ld.push [sp+1]" .
+jmpl "jmp" label .
 nop .
 
 MOVES
@@ -358,6 +359,14 @@ with STACK
 
 pat cms $1==2			leaving sbi 2
 pat cms $1==4			leaving cmu 4
+
+pat csa $1==2
+with STACK
+	gen jmpl {label, ".csa2"}
+
+pat csb $1==2
+with STACK
+	gen jmpl {label, ".csb2"}
 
 pat dup $1==4
 with arith arith
