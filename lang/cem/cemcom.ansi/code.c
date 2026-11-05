@@ -371,6 +371,11 @@ void end_proc(arith fbytes)
 	if (options['d'])
 		DfaEndFunction();
 #endif /* DATAFLOW */
+	/* with -Vy the callee leaves its result on the stack, so a function
+	   that is not void has to leave one even if it never returns a value */
+	if (options['y'] && !return_expr_occurred && func_size > 0 &&
+	    struct_return == 0)
+		return_expr_occurred = 2;
 	C_df_ilb(return2_label);
 	if (return_expr_occurred && struct_return == 0)
 	{
