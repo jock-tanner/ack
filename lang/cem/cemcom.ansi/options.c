@@ -206,6 +206,11 @@ next_option: /* to allow combined one-char options */
 						warning("bitfields are not implemented");
 #endif /* NOBITFIELD */
 						break;
+					case 'y': /* the callee pops its parameters and leaves the
+					             result on the stack, a variadic call passes
+					             a count (Stackette) */
+						options['y'] = 1;
+						break;
 					case 'S': /* initial struct alignment	*/
 						if (sz != (arith)0)
 							struct_align = sz;

@@ -22,6 +22,8 @@
 #include "arith.h"
 #include "type.h"
 #include "proto.h"
+
+extern char options[];
 #include "label.h"
 #include "code.h"
 #include "def.h"
@@ -542,6 +544,7 @@ void EVAL(struct expr* expr, int val, int code, label true_label, label false_la
 					int variadic = 0;
 					arith rwords = 0;
 
+					if (options['y'])
 					{ /* a call of a function with an ellipsis in its prototype */
 						struct proto* pl;
 
@@ -638,7 +641,7 @@ void EVAL(struct expr* expr, int val, int code, label true_label, label false_la
 						else
 							C_lfr(ATW(tp->tp_size));
 					}
-					else
+					else if (options['y'])
 					{
 						/* the result is not wanted, but a callee that pops its
 						   own parameters leaves it on the stack: fetch and drop it */

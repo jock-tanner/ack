@@ -288,7 +288,7 @@ void begin_proc(struct decspecs* ds, struct idf* idf) /* to be called when enter
 		struct proto* pl;
 
 		func_variadic = 0;
-		for (pl = def->df_type->tp_proto; pl; pl = pl->next)
+		for (pl = def->df_type->tp_proto; options['y'] && pl; pl = pl->next)
 			if (pl->pl_flag & PL_ELLIPSIS)
 				func_variadic = 1;
 	}
