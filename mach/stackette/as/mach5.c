@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #define RCSID5 "$Id$"
 
 /*
@@ -111,28 +112,35 @@ void emit_lea(int dd)
 
 /*
  * bra and call: an 11-bit word offset from the next instruction, to a label
- * of the same section
+ * of the same section. A bra that does not reach becomes a jmp, which takes
+ * a second word: small() decides that over the passes.
  */
 void emit_branch(int word, expr_t e)
 {
 	long off;
+	int fits;
 
-	if (pass == PASS_1) {
-		emit2(word);
-		return;
-	}
-	if ((e.typ & ~S_DOT) != (DOTTYP & ~S_DOT) && (e.typ & S_TYP) != S_UND) {
-		serror("branch to another section");
-		emit2(word);
-		return;
-	}
 	off = (long)e.val - (long)(DOTVAL + 2);
-	if (off & 1 || off < -2048 || off > 2046) {
-		if (pass == PASS_3)
-			serror("branch target out of range or odd");
-		off = 0;
+	if (pass == PASS_2 && off > 0 && !(e.typ & S_DOT))
+		off -= DOTGAIN;
+	fits = !(off & 1) && off >= -2048 && off <= 2046;
+	if ((e.typ & ~S_DOT) != (DOTTYP & ~S_DOT) && (e.typ & S_TYP) != S_UND)
+		fits = 0;
+	if ((word & 0xffff) != 0xc000) {
+		if (!fits && pass == PASS_3)
+			serror("call target out of range or odd");
+		emit2(word | (int)((off >> 1) & 0x7ff));
+		return;
 	}
-	emit2(word | (int)((off >> 1) & 0x7ff));
+	if (getenv("NOSMALL") == 0 && small(fits, 2)) {
+		emit2(word | (int)((off >> 1) & 0x7ff));
+		return;
+	}
+	emit2(0xf980);
+#ifdef RELOCATION
+	newrelo(e.typ, RELO2);
+#endif
+	emit2(e.val);
 }
 
 /*

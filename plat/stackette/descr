@@ -24,9 +24,9 @@ var ALIGN=-a0:2 -a1:2 -a2:2 -a3:2
 # the C front end: callee-popped parameters, results on the stack, variadic counts
 var CC_ALIGN=-Vy
 # text and rom stay in flash from address 0 (boot.s maps the pages below the
-# data to the flash); the data (then the bss) lives in RAM from 0x4000, and
+# data to the flash); the data (then the bss) lives in RAM from 0xb000 (the text with the floating point library is about 40 KiB), and
 # boot.s copies its image from the flash address endrom
-var DATABASE=-b2:0x4000
+var DATABASE=-b2:0xb000
 
 # Override the setting in fe so that files compiled for linux386 can see
 # the platform-specific headers.
@@ -54,7 +54,6 @@ name led
 	program {EM}/lib/ack/em_led
 	mapflag -l* LNAME={PLATFORMDIR}/lib*
 	mapflag -i SEPID=-b1:0
-	mapflag -fp FLOATS={PLATFORMDIR}/libfp.a
 	args {ALIGN} {DATABASE} {SEPID?} \
 		({RTS}:.b=-u _i_main) \
 	    (.e:{HEAD}={PLATFORMDIR}/boot.o) \
@@ -69,7 +68,7 @@ name led
 		(.mod:{TAIL}={PLATFORMDIR}/libmodula2.a) \
 		(.ocm:{TAIL}={PLATFORMDIR}/liboccam.a) \
 		(.ocm.bas.mod.b.c.p:{TAIL}={PLATFORMDIR}/libc.a) \
-		{FLOATS?} \
+		(.ocm.bas.mod.b.c.p:{TAIL}={PLATFORMDIR}/libfp.a) \
 		(.e:{TAIL}={PLATFORMDIR}/libem.a \
 		           {PLATFORMDIR}/libsys.a \
 				   {PLATFORMDIR}/libc.a \

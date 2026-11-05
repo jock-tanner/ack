@@ -13,6 +13,7 @@ export(
     items={
         "$(PLATIND)/stackette/libend.a": "mach/stackette/libend+lib_stackette",
         "$(PLATIND)/stackette/libem.a": "mach/stackette/libem+lib_stackette",
+        "$(PLATIND)/stackette/libfp.a": "mach/stackette/libfp+lib_stackette",
     },
     deps=["lang/cem/libcc.ansi+all_stackette"],
 )

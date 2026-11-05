@@ -11,6 +11,9 @@
 #if ACKCONF_WANT_FLOAT
  exp $modf
  pro $modf,0
+#if _EM_WSIZE==2 && _EM_PSIZE==2 && _EM_DSIZE==8
+ mes 9,10,8
+#endif
  lal 0
  loi _EM_DSIZE
  loc 1

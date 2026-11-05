@@ -127,6 +127,7 @@ stlo "st [sp+2], tos" .
 sthi "st [sp+3], nos" .
 bswaptos "bswap tos" .
 ldsp1 "ld.push [sp+1]" .
+ldsp3 "ld.push [sp+3]" .
 jmpl "jmp" label .
 nop .
 
@@ -446,6 +447,187 @@ with arith arith
 with STACK
 	gen ldsp1 .
 	    ldsp1 .
+
+/* group 11: floating point, in software: see mach/stackette/libfp */
+
+pat adf $1==4
+with STACK
+	gen calla {label, "_sf_adf4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat sbf $1==4
+with STACK
+	gen calla {label, "_sf_sbf4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat mlf $1==4
+with STACK
+	gen calla {label, "_sf_mlf4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat dvf $1==4
+with STACK
+	gen calla {label, "_sf_dvf4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat ngf $1==4
+with STACK
+	gen calla {label, "_sf_ngf4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat cmf $1==4
+with STACK
+	gen calla {label, "_cmf4"}
+	yields {onstack, 0}
+
+pat adf $1==8
+with STACK
+	gen calla {label, ".adf8"}
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat sbf $1==8
+with STACK
+	gen calla {label, ".sbf8"}
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat mlf $1==8
+with STACK
+	gen calla {label, ".mlf8"}
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat dvf $1==8
+with STACK
+	gen calla {label, ".dvf8"}
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat ngf $1==8
+with STACK
+	gen calla {label, ".ngf8"}
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat cmf $1==8
+with STACK
+	gen calla {label, ".cmf8"}
+	yields {onstack, 0}
+
+pat zrf $1==4			leaving zer 4
+pat zrf $1==8			leaving zer 8
+
+pat zer $1==2			leaving loc 0
+pat zer $1==4			leaving loc 0 loc 0
+pat zer $1==8			leaving loc 0 loc 0 loc 0 loc 0
+
+pat fef $1==4
+with STACK
+	gen calla {label, ".fef4"}
+	yields {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat fef $1==8
+with STACK
+	gen calla {label, ".fef8"}
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat fif $1==4
+with STACK
+	gen calla {label, ".fif4"}
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat fif $1==8
+with STACK
+	gen calla {label, ".fif8"}
+	leaving lfr 8 lfr 8
+
+/* conversions: the integer is widened to a long first */
+
+pat loc loc cif $1==2		leaving loc 2 loc 4 cii loc 4 loc $2 cif
+pat loc loc cuf $1==2		leaving loc 2 loc 4 cuu loc 4 loc $2 cuf
+
+pat loc loc cif $1==4 && $2==4
+with STACK
+	gen calla {label, "_sf_cif4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat loc loc cuf $1==4 && $2==4
+with STACK
+	gen calla {label, "_sf_cuf4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat loc loc cif $1==4 && $2==8
+with STACK
+	gen calla {label, ".cif8"}
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat loc loc cuf $1==4 && $2==8
+with STACK
+	gen calla {label, ".cuf8"}
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat loc loc cfi $1==4 && $2==4
+with STACK
+	gen calla {label, "_sf_cfi4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat loc loc cfu $1==4 && $2==4
+with STACK
+	gen calla {label, "_sf_cfu4"}
+	yields {onstack, 0} {onstack, 0}
+
+pat loc loc cfi $1==8 && $2==4
+with STACK
+	gen calla {label, ".cfi8"}
+	yields {onstack, 0} {onstack, 0}
+
+pat loc loc cfu $1==8 && $2==4
+with STACK
+	gen calla {label, ".cfu8"}
+	yields {onstack, 0} {onstack, 0}
+
+pat loc loc cfi $2==2		leaving loc $1 loc 4 cfi loc 4 loc 2 cii
+pat loc loc cfu $2==2		leaving loc $1 loc 4 cfu loc 4 loc 2 cuu
+
+pat loc loc cff $1==4 && $2==8
+with STACK
+	gen calla {label, ".cff48"}
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat loc loc cff $1==8 && $2==4
+with STACK
+	gen calla {label, ".cff84"}
+	yields {onstack, 0} {onstack, 0}
+
+pat loc loc cff $1==$2
+
+/* 8-byte results of calls, returns and copies */
+
+/* the result is already there: only the fake stack needs to know */
+pat lfr $1==8
+with STACK
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat cal asp lfr $3==8
+with STACK
+	gen calla {label, $1}
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat cal lfr $2==8
+with STACK
+	gen calla {label, $1}
+	yields {onstack, 0} {onstack, 0} {onstack, 0} {onstack, 0}
+
+pat ret $1==8
+with STACK
+	gen retf {constp8, 4}
+
+pat dup $1==8
+with STACK
+	gen ldsp3 .
+	    ldsp3 .
+	    ldsp3 .
+	    ldsp3 .
+
+pat trp
+with STACK
+	gen calla {label, "_fptrp"}
 
 /* group 4: shorthands for the optimizer's output */
 

@@ -9,6 +9,6 @@
 #define ACKCONF_WANT_EMULATED_TIME 0
 
 /* no floating point yet */
-#define ACKCONF_WANT_FLOAT 0
+#define ACKCONF_WANT_FLOAT 1
 
 #endif

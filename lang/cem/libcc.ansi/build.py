@@ -26,17 +26,12 @@ simplerule(
 )
 
 
-# Platforms without floating point leave out what needs it; setjmp needs to
-# set the return stack pointer, which the Stackette cannot do yet.
+# setjmp (and sleep, which uses it) need to set the return stack pointer, which the Stackette cannot
+# do yet.
 NOFLOAT_PLATS = {"stackette"}
 FLOAT_SRCS = (
-    "/math/",
-    "/strtod.c",
-    "/atof.c",
-    "/ext_comp.c",
-    "/difftime.c",
-    "/sleep.c",
     "/setjmp.e",
+    "/sleep.c",
 )
 
 
