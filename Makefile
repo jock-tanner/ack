@@ -5,13 +5,12 @@
 
 # What platform to build for by default?
 
-DEFAULT_PLATFORM ?= pc86
+DEFAULT_PLATFORM ?= stackette
 
-# Which architectures should get built?
+# Which platforms should get built?
 
 $(if $(PLATS), $(error Don't set PLATS on the command line, because reasons. Edit the Makefile instead.))
-PLATS = all
-# PLATS = linux386 linuxppc linuxmips
+PLATS = stackette
 
 # Where should the ACK put its temporary files?
 
