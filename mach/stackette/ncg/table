@@ -369,6 +369,14 @@ pat csb $1==2
 with STACK
 	gen jmpl {label, ".csb2"}
 
+pat csa $1==4
+with STACK
+	gen jmpl {label, ".csa4"}
+
+pat csb $1==4
+with STACK
+	gen jmpl {label, ".csb4"}
+
 /* structs and blocks: loads and stores of more than 4 bytes, one word at a
    time, the last word first so that the low word ends up on top */
 

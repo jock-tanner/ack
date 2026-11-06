@@ -14,6 +14,8 @@
 .sect .bss
 .define .csa2
 .define .csb2
+.define .csa4
+.define .csb4
 
 .sect .text
 
@@ -87,3 +89,108 @@ csb_dflt:
 	st ip, pop
 csb_fatal:
 	bra csb_fatal
+
+! The same for a long index (low word on top of the high word below the
+! descriptor address). The descriptor of csa has the default target, the lower
+! bound (2 words), upper-lower (2 words, only the low one is used: a longer
+! table does not fit the address space), the targets; that of csb the default,
+! the count (the low word only), and n entries of the value (2 words) and the
+! target.
+
+.csa4:
+	ld push, [tos]
+	ld push, [sp+1]
+	add.tos $4
+	ld tos, [tos]
+	ld push, [sp+2]
+	add.tos $2
+	ld tos, [tos]
+	ld push, [sp+4]
+	sub.tos [sp+1]
+	ld push, [sp+6]
+	sbc.tos [sp+3]
+	cmp tos, $0
+	skip eq
+	bra csa4_d8
+	ld push, [sp+5]
+	add.tos $6
+	ld tos, [tos]
+	cmp tos, [sp+2]
+	st null, pop
+	skip hs
+	bra csa4_d8
+	ld push, [sp+1]
+	add.tos tos
+	add.tos [sp+6]
+	add.tos $10
+	ld tos, [tos]
+	cmp tos, $0
+	skip ne
+	bra csa4_d9
+csa4_go:
+	st [sp+8], tos
+	addp sp, $16
+	st ip, pop
+csa4_d8:
+	ld push, [sp+4]
+	bra csa4_chk
+csa4_d9:
+	ld tos, [sp+5]
+csa4_chk:
+	cmp tos, $0
+	skip ne
+	bra csa4_fatal
+	bra csa4_go
+csa4_fatal:
+	bra csa4_fatal
+
+.csb4:
+	ld push, [tos]
+	ld push, [sp+1]
+	add.tos $6
+	ld push, [sp+2]
+	add.tos $2
+	ld tos, [tos]
+csb4_loop:
+	cmp tos, $0
+	skip ne
+	bra csb4_d6
+	ld push, [sp+1]
+	ld tos, [tos]
+	cmp tos, [sp+5]
+	st null, pop
+	skip eq
+	bra csb4_next
+	ld push, [sp+1]
+	add.tos $2
+	ld tos, [tos]
+	cmp tos, [sp+6]
+	st null, pop
+	skip eq
+	bra csb4_next
+	ld push, [sp+1]
+	add.tos $4
+	ld tos, [tos]
+	cmp tos, $0
+	skip ne
+	bra csb4_d7
+csb4_go:
+	st [sp+6], tos
+	addp sp, $12
+	st ip, pop
+csb4_next:
+	add.nos $6
+	sub tos, $1
+	bra csb4_loop
+csb4_d6:
+	ld push, [sp+2]
+	bra csb4_chk
+csb4_d7:
+	ld tos, [sp+3]
+csb4_chk:
+	cmp tos, $0
+	skip ne
+	bra csb4_fatal
+	bra csb4_go
+csb4_fatal:
+	bra csb4_fatal
