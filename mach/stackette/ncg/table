@@ -438,10 +438,10 @@ with STACK
 pat asp $1>126			leaving asp 126 asp $1-126
 pat asp $1<0-128		leaving asp 0-128 asp $1+128
 
-pat lol $1<0-128 || $1>126	leaving lal $1 loi 2
-pat ldl $1<0-128 || $1>124	leaving lal $1 loi 4
-pat stl $1<0-128 || $1>126	leaving lal $1 sti 2
-pat sdl $1<0-128 || $1>124	leaving lal $1 sti 4
+pat lol $1<0-128 || $1>126 || ($1&1)==1	leaving lal $1 loi 2
+pat ldl $1<0-128 || $1>124 || ($1&1)==1	leaving lal $1 loi 4
+pat stl $1<0-128 || $1>126 || ($1&1)==1	leaving lal $1 sti 2
+pat sdl $1<0-128 || $1>124 || ($1&1)==1	leaving lal $1 sti 4
 pat lil $1<0-128 || $1>126	leaving lol $1 loi 2
 
 /* the trap ignore mask is not used */
