@@ -948,6 +948,15 @@ pat loc loc cuu $1==2 && $2==1
 pat loc loc ciu $1==2 && $2==1
 pat loc loc cui $1==2 && $2==1
 
+pat loc loc cii $1==1 && $2==4	leaving loc 1 loc 2 cii loc 2 loc 4 cii
+pat loc loc ciu $1==1 && $2==4	leaving loc 1 loc 2 cii loc 2 loc 4 cuu
+pat loc loc cuu $1==1 && $2==4	leaving loc 1 loc 2 cuu loc 2 loc 4 cuu
+pat loc loc cui $1==1 && $2==4	leaving loc 1 loc 2 cuu loc 2 loc 4 cuu
+pat loc loc cii $1==4 && $2==1	leaving loc 4 loc 2 cii loc 2 loc 1 cii
+pat loc loc cuu $1==4 && $2==1	leaving loc 4 loc 2 cii loc 2 loc 1 cii
+pat loc loc ciu $1==4 && $2==1	leaving loc 4 loc 2 cii loc 2 loc 1 cii
+pat loc loc cui $1==4 && $2==1	leaving loc 4 loc 2 cii loc 2 loc 1 cii
+
 /* group 11: calls through a pointer */
 
 pat cai asp lfr $3==2
