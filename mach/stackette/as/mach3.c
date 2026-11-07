@@ -77,6 +77,7 @@
 
 {0,	ADDPOP,		0xd400,		"addp"},
 {0,	RETNOP,		0xf840,		"retn"},
+{0,	RETNOP,		0xf900,		"trap"},
 {0,	FRAMEOP,	0,		"frame"},
 {0,	FRAMEOP,	1,		"framev"},
 {0,	RETFOP,		0,		"retf"},

@@ -19,7 +19,7 @@ var xa=2
 var ARCH=stackette
 var PLATFORM=stackette
 var PLATFORMDIR={EM}/share/ack/{PLATFORM}
-var CPP_F=-D__unix
+var CPP_F=-D__unix -D__stackette -D__ACK__=1
 var ALIGN=-a0:2 -a1:2 -a2:2 -a3:2
 # the C front end: callee-popped parameters, results on the stack, variadic counts
 var CC_ALIGN=-Vy
