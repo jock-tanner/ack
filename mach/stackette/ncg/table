@@ -1366,6 +1366,10 @@ with STACK
 	gen bswaptos .
 	    sxttos .
 
+pat loc sli $1>=9 && $1<=15 && $2==2	leaving loc 8 sli 2 loc $1-8 sli 2
+pat loc sru $1>=9 && $1<=15 && $2==2	leaving loc 8 sru 2 loc $1-8 sru 2
+pat loc sri $1>=9 && $1<=15 && $2==2	leaving loc 8 sri 2 loc $1-8 sri 2
+
 /* a long has its low word on top: two instructions per bit */
 
 pat loc sli $1==1 && $2==4
