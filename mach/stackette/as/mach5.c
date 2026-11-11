@@ -132,7 +132,7 @@ void emit_branch(int word, expr_t e)
 		emit2(word | (int)((off >> 1) & 0x7ff));
 		return;
 	}
-	if (getenv("NOSMALL") == 0 && small(fits, 2)) {
+	if (small(fits, 2)) {
 		emit2(word | (int)((off >> 1) & 0x7ff));
 		return;
 	}
