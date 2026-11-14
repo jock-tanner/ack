@@ -203,11 +203,29 @@ void emit_retf(int words)
 	}
 	if (n < 0)
 		free_bytes -= 2 * words - frm_par;
-	for (i = 0; i < words; i++)
-		emit2((FMT_PFP << 14) | (OP_ST << 10) | (2 << 8) |
-			pfp_field(base + 2 * i));
-	if (free_bytes)
-		emit_addp(0xd400, 4, free_bytes);
+	if (frm_par + frm_loc > 0 && frm_par + frm_loc < 2 * words) {
+		/*
+		 * The result moves up by less than its size, so popping the
+		 * words from the lowest would overwrite the higher ones before
+		 * they are read. Copy from the highest, leaving the stack
+		 * alone, and then release it all.
+		 */
+		int src = -frm_loc - 2 * words;
+
+		for (i = words - 1; i >= 0; i--) {
+			emit2((FMT_PFP << 14) | (OP_LD << 10) | (2 << 8) |
+				pfp_field(src + 2 * i));
+			emit2((FMT_PFP << 14) | (OP_ST << 10) | (2 << 8) |
+				pfp_field(base + 2 * i));
+		}
+		emit_addp(0xd400, 4, 2 * words + free_bytes);
+	} else {
+		for (i = 0; i < words; i++)
+			emit2((FMT_PFP << 14) | (OP_ST << 10) | (2 << 8) |
+				pfp_field(base + 2 * i));
+		if (free_bytes)
+			emit_addp(0xd400, 4, free_bytes);
+	}
 	if (n < 0)
 		n = 0;
 	if (n > 63) {
