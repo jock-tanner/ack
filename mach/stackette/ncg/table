@@ -103,6 +103,12 @@ ldnos "ld.nos" imm8:ro .
 cmpkeep "cmp.tos" imm8:ro .
 skippl "skip pl" .
 dbltos "add.tos tos" .
+shltosk "shl tos," imm8:ro .
+shrtosk "shr tos," imm8:ro .
+sartosk "sar tos," imm8:ro .
+shlpush "shl push, tos" .
+shrpush "shr push, tos" .
+sarpush "sar push, tos" .
 shrtos "shr tos" .
 sartos "sar tos" .
 shrnos "shr nos" .
@@ -1322,55 +1328,30 @@ with STACK
 	    skipge .
 	    ldtos {constp8, 0}
 
-/* group 13: shifts are done by library routines that take the count on
-   top of the value and leave the result on the stack */
+/* group 13: shifts of a word are one instruction (shl, shr, sar); those of a
+   long are in line when short, else done by library routines that take the
+   count on top of the value and leave the result on the stack */
 
-/* constant shifts are done in line when they are short */
+/* shifts of a word: one instruction. A constant count of 0..15 is in the
+   instruction; a variable one is on top of the value (the count of the width
+   or more gives 0, for sri the sign). The front end uses slu for a left shift
+   of an unsigned value. */
 
-pat loc sli $1==1 && $2==2
+pat loc sli $1>=0 && $1<=15 && $2==2
 with STACK
-	gen dbltos .
+	gen shltosk {constp8, $1}
 
-pat loc sli $1==2 && $2==2	leaving loc 1 sli 2 loc 1 sli 2
-pat loc sli $1==3 && $2==2	leaving loc 1 sli 2 loc 1 sli 2 loc 1 sli 2
-pat loc sli $1==4 && $2==2	leaving loc 2 sli 2 loc 2 sli 2
-
-pat loc sli $1==8 && $2==2
+pat loc slu $1>=0 && $1<=15 && $2==2
 with STACK
-	gen bswaptos .
-	    andtos {const2, 0-256}
+	gen shltosk {constp8, $1}
 
-pat loc sru $1==1 && $2==2
+pat loc sru $1>=0 && $1<=15 && $2==2
 with STACK
-	gen shrtos .
+	gen shrtosk {constp8, $1}
 
-pat loc sru $1==2 && $2==2	leaving loc 1 sru 2 loc 1 sru 2
-pat loc sru $1==3 && $2==2	leaving loc 1 sru 2 loc 1 sru 2 loc 1 sru 2
-pat loc sru $1==4 && $2==2	leaving loc 2 sru 2 loc 2 sru 2
-
-pat loc sru $1==8 && $2==2
+pat loc sri $1>=0 && $1<=15 && $2==2
 with STACK
-	gen bswaptos .
-	    andtos {const2, 255}
-
-pat loc sri $1==1 && $2==2
-with STACK
-	gen sartos .
-
-pat loc sri $1==2 && $2==2	leaving loc 1 sri 2 loc 1 sri 2
-pat loc sri $1==3 && $2==2	leaving loc 1 sri 2 loc 1 sri 2 loc 1 sri 2
-pat loc sri $1==4 && $2==2	leaving loc 2 sri 2 loc 2 sri 2
-
-pat loc sri $1==8 && $2==2
-with STACK
-	gen bswaptos .
-	    sxttos .
-
-pat loc sli $1>=9 && $1<=15 && $2==2	leaving loc 8 sli 2 loc $1-8 sli 2
-pat loc sru $1>=9 && $1<=15 && $2==2	leaving loc 8 sru 2 loc $1-8 sru 2
-pat loc sri $1>=9 && $1<=15 && $2==2	leaving loc 8 sri 2 loc $1-8 sri 2
-
-/* a long has its low word on top: two instructions per bit */
+	gen sartosk {constp8, $1}
 
 pat loc sli $1==1 && $2==4
 with STACK
@@ -1404,17 +1385,17 @@ pat slu $1==4			leaving sli 4
 
 pat sli $1==2
 with STACK
-	gen calla {label, ".sli2"}
+	gen shlpush .
 	yields {onstack, 0}
 
 pat sri $1==2
 with STACK
-	gen calla {label, ".sri2"}
+	gen sarpush .
 	yields {onstack, 0}
 
 pat sru $1==2
 with STACK
-	gen calla {label, ".sru2"}
+	gen shrpush .
 	yields {onstack, 0}
 
 pat sli $1==4

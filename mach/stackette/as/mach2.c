@@ -20,6 +20,7 @@
 %token <y_word> RETFOP
 %token <y_word> BITOP
 %token <y_word> UNOP
+%token <y_word> SHLOP
 %token <y_word> GENDD
 %token <y_word> STDD
 %token <y_word> LEADD

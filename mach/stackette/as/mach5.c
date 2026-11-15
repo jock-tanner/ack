@@ -170,14 +170,14 @@ static void emit_retv(int words)
 	if (words > 0) {
 		emit2((FMT_PFP << 14) | (OP_LEA << 10) | (2 << 8) | pfp_field(0));
 		emit2((FMT_PFP << 14) | (OP_LD << 10) | (2 << 8) | pfp_field(0));
-		emit2((2 << 14) | (OP_ADD << 10) | (0 << 8) | 0);
-		emit2((2 << 14) | (OP_ADD << 10) | (2 << 8) | 0);
+		emit2((2 << 14) | (OP_ADD << 10) | (0 << 8) | 0x40);	/* add tos, tos */
+		emit2((2 << 14) | (OP_ADD << 10) | (2 << 8) | 0x40);	/* add push, tos */
 		for (i = 0; i < words; i++) {
 			emit2((2 << 14) | (OP_ST << 10) | (3 << 8) | 0x16);
 			if (i < words - 1)
 				emit2((OP_ADD << 10) | 2);
 		}
-		emit2((2 << 14) | (OP_ST << 10) | (2 << 8) | 5);
+		emit2((2 << 14) | (OP_ST << 10) | (2 << 8) | 0);	/* st null, pop */
 	}
 	if (frm_loc)
 		emit_addp(0xd400, 4, frm_loc);
@@ -190,6 +190,35 @@ static void emit_retv(int words)
  * released, and ret #n drops the rest of the parameters. If the result is
  * bigger than the parameters, it goes below pfp, and ret #0 leaves it there.
  */
+/*
+ * shl, shr and sar with a count: kind 0 shl, 1 shr, 2 sar (anything else is
+ * not a shift with a count); the byte form has bit 4 set in `op`. Either an
+ * immediate count 0..15 and dd tos or nos, or the count in TOS (`tos` as the
+ * second operand, var = 1 + register number, so only tos is 1) with dd push.
+ */
+void emit_shift(int kind, int op, int dd, int count, int var)
+{
+	int v = var != 0;
+
+	if (kind < 0 || kind > 2) {
+		serror("only shl, shr and sar have a count");
+		return;
+	}
+	if (v) {
+		if (var != 1 || dd != 2)
+			serror("shift by a count in tos: push, tos");
+		dd = 0;
+		count = 0;
+	} else {
+		if (dd > 1)
+			serror("shift by a constant: tos or nos");
+		if (count < 0 || count > 15)
+			serror("shift count 0..15");
+	}
+	emit2(0xe800 | kind << 8 | (op & 16) << 3 | v << 6 | (dd & 3) << 4 |
+		(count & 15));
+}
+
 void emit_retf(int words)
 {
 	int n = frm_par / 2 - words;

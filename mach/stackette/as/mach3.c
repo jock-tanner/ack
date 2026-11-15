@@ -10,10 +10,11 @@
 {0,	DDONLY,		3,		"under"},
 {0,	REGONLY,	2,		"mbp"},
 {0,	REGONLY,	3,		"midx"},
-{0,	REGONLY,	4,		"sp"},
-{0,	REGONLY,	5,		"null"},
+{0,	REGONLY,	1,		"sp"},
+{0,	REGONLY,	1,		"psp"},
+{0,	REGONLY,	0,		"null"},
 {0,	REGONLY,	6,		"sr"},
-{0,	REGONLY,	15,		"ip"},
+{0,	REGONLY,	7,		"ip"},
 {0,	PFP,		0,		"pfp"},
 
 {0,	NOOPOP,		0xf800,		"nop"},
@@ -110,6 +111,11 @@
 {0,	UNOP,		22,		"shr.b"},
 {0,	UNOP,		7,		"sar"},
 {0,	UNOP,		23,		"sar.b"},
+
+/* shifts by a count: shl, and shr and sar with a second operand. The value
+ * is 16 for the byte form. */
+{0,	SHLOP,		0,		"shl"},
+{0,	SHLOP,		16,		"shl.b"},
 
 /* short forms for the code generator: op.dd src, st.dd dst, lea.dd [pfp+n];
  * the value is the instruction value | dd << 8 */

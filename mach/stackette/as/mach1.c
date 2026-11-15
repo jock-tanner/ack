@@ -39,4 +39,5 @@ extern int frm_loc;
 extern int frm_par;
 extern int frm_var;
 void emit_retf(int words);
+void emit_shift(int kind, int op, int dd, int count, int var);
 void emit_addp(int base, int reg, int bytes);
