@@ -103,19 +103,23 @@
 {0,	UNOP,		18,		"sxt.b"},
 {0,	UNOP,		3,		"bswap"},
 {0,	UNOP,		19,		"bswap.b"},
-{0,	UNOP,		4,		"rlc"},
-{0,	UNOP,		20,		"rlc.b"},
-{0,	UNOP,		5,		"rrc"},
-{0,	UNOP,		21,		"rrc.b"},
-{0,	UNOP,		6,		"shr"},
-{0,	UNOP,		22,		"shr.b"},
-{0,	UNOP,		7,		"sar"},
-{0,	UNOP,		23,		"sar.b"},
 
-/* shifts by a count: shl, and shr and sar with a second operand. The value
- * is 16 for the byte form. */
+/* shifts and rotates by a count: the value is the kind (shifter.ShiftOp), plus
+ * 16 for the byte form. */
 {0,	SHLOP,		0,		"shl"},
 {0,	SHLOP,		16,		"shl.b"},
+{0,	SHLOP,		1,		"shr"},
+{0,	SHLOP,		17,		"shr.b"},
+{0,	SHLOP,		2,		"sar"},
+{0,	SHLOP,		18,		"sar.b"},
+{0,	SHLOP,		4,		"rol"},
+{0,	SHLOP,		20,		"rol.b"},
+{0,	SHLOP,		5,		"ror"},
+{0,	SHLOP,		21,		"ror.b"},
+{0,	SHLOP,		6,		"rcl"},
+{0,	SHLOP,		22,		"rcl.b"},
+{0,	SHLOP,		7,		"rcr"},
+{0,	SHLOP,		23,		"rcr.b"},
 
 /* short forms for the code generator: op.dd src, st.dd dst, lea.dd [pfp+n];
  * the value is the instruction value | dd << 8 */

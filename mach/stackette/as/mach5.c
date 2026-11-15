@@ -185,40 +185,36 @@ static void emit_retv(int words)
 }
 
 /*
+ * Shifts and rotates with a count: `op` is the kind of shifter.ShiftOp, plus 16
+ * for the byte form. Either an immediate count 1..16 (the field is 0 for 16) or
+ * the count in TOS (`tos` as the second operand, var = 1 + register number, so
+ * only tos is 1). dd is that of the unary operations for the immediate count
+ * and that of the two-operand ALU operations for the count in TOS.
+ */
+void emit_shift(int op, int dd, int count, int var)
+{
+	int v = var != 0;
+
+	if ((op & 7) == 3) {
+		serror("not a shift");
+		return;
+	}
+	if (v) {
+		if (var != 1)
+			serror("the count of a shift: tos");
+		count = 0;
+	} else if (count < 1 || count > 16)
+		serror("shift count 1..16");
+	emit2(0xe800 | v << 10 | (dd & 3) << 8 | (op & 16) << 3 |
+		(op & 7) << 4 | (count & 15));
+}
+
+/*
  * retf $r: the epilogue of a function that returns r words on the stack.
  * The result goes to [pfp+2n], n = parameter words - r, the locals are
  * released, and ret #n drops the rest of the parameters. If the result is
  * bigger than the parameters, it goes below pfp, and ret #0 leaves it there.
  */
-/*
- * shl, shr and sar with a count: kind 0 shl, 1 shr, 2 sar (anything else is
- * not a shift with a count); the byte form has bit 4 set in `op`. Either an
- * immediate count 0..15 and dd tos or nos, or the count in TOS (`tos` as the
- * second operand, var = 1 + register number, so only tos is 1) with dd push.
- */
-void emit_shift(int kind, int op, int dd, int count, int var)
-{
-	int v = var != 0;
-
-	if (kind < 0 || kind > 2) {
-		serror("only shl, shr and sar have a count");
-		return;
-	}
-	if (v) {
-		if (var != 1 || dd != 2)
-			serror("shift by a count in tos: push, tos");
-		dd = 0;
-		count = 0;
-	} else {
-		if (dd > 1)
-			serror("shift by a constant: tos or nos");
-		if (count < 0 || count > 15)
-			serror("shift count 0..15");
-	}
-	emit2(0xe800 | kind << 8 | (op & 16) << 3 | v << 6 | (dd & 3) << 4 |
-		(count & 15));
-}
-
 void emit_retf(int words)
 {
 	int n = frm_par / 2 - words;

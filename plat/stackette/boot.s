@@ -33,10 +33,7 @@ begtext:
 	! are at 0xf100 (code) and 0xf160 (data), a word for each page.
 	ld push, #begdata
 	bswap tos
-	shr tos
-	shr tos
-	shr tos
-	shr tos
+	shr tos, $4
 	ld push, $1
 map:
 	cmp tos, [sp+1]

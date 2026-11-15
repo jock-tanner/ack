@@ -57,20 +57,13 @@ operation
 				emit2($1 | $3);
 			}
 	|	UNOP dd
-			{	if (($1 & 15) >= 6)	/* shr, sar: a shift by 1 */
-					emit_shift((int)($1 & 15) - 5, (int)$1, (int)$2, 1, 0);
-				else
-					emit2(0xe000 | ($2 << 8) | (($1 & 16) << 3) |
-						(($1 & 15) << 3));
+			{	emit2(0xe000 | ($2 << 8) | (($1 & 16) << 3) |
+					(($1 & 15) << 3));
 			}
 	|	SHLOP dd ',' '$' absexp
-			{	emit_shift(0, (int)$1, (int)$2, (int)$5, 0);}
+			{	emit_shift((int)$1, (int)$2, (int)$5, 0);}
 	|	SHLOP dd ',' TOSNOS
-			{	emit_shift(0, (int)$1, (int)$2, 0, 1 + (int)$4);}
-	|	UNOP dd ',' '$' absexp
-			{	emit_shift((int)($1 & 15) - 5, (int)$1, (int)$2, (int)$5, 0);}
-	|	UNOP dd ',' TOSNOS
-			{	emit_shift((int)($1 & 15) - 5, (int)$1, (int)$2, 0, 1 + (int)$4);}
+			{	emit_shift((int)$1, (int)$2, 0, 1 + (int)$4);}
 	|	GENDD src
 			{	emit_gen($1 & 255, $1 >> 8, 0);}
 	|	STDD dest
