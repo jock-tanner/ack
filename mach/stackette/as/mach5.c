@@ -82,7 +82,7 @@ void emit_gen(int op, int dd, int is_dst)
 		f = 0x10 | (opnd.field << 1);
 		break;
 	case K_ABS:
-		f = 0x20;
+		f = opnd.field ? 0x24 : 0x20;	/* [abs]*: 01 0010 e */
 		break;
 	case K_IMM16:
 		if (is_dst) {

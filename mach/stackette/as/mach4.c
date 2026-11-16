@@ -94,7 +94,9 @@ src	:	'$' absexp
 	|	dest
 	;
 dest	:	'[' expr ']'
-			{	opnd.kind = K_ABS; opnd.extra = $2;}
+			{	opnd.kind = K_ABS; opnd.extra = $2; opnd.field = 0;}
+	|	'[' expr ']' '*'
+			{	opnd.kind = K_ABS; opnd.extra = $2; opnd.field = 1;}
 	|	'[' PFP '+' absexp ']'
 			{	opnd.kind = K_PFP; opnd.field = (short)$4;}
 	|	'[' PFP '-' absexp ']'
