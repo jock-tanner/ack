@@ -116,6 +116,14 @@ dest	:	'[' expr ']'
 			{	opnd.kind = K_IDX; opnd.field = 1;
 				if ($2 != 2 || $4 != 3) serror("use [mbp+midx++]");
 			}
+	|	'[' reg '+' reg '+' '+' ']' '*'
+			{	opnd.kind = K_IDX; opnd.field = 5;
+				if ($2 != 2 || $4 != 3) serror("use [mbp+midx++]*");
+			}
+	|	'[' reg '+' '-' '-' reg ']' '*'
+			{	opnd.kind = K_IDX; opnd.field = 6;
+				if ($2 != 2 || $6 != 3) serror("use [mbp+--midx]*");
+			}
 	|	'[' reg '+' '-' '-' reg ']'
 			{	opnd.kind = K_IDX; opnd.field = 2;
 				if ($2 != 2 || $6 != 3) serror("use [mbp+--midx]");

@@ -11,7 +11,7 @@
 #define K_PFP	4	/* [pfp+expr]: field is the byte offset */
 #define K_PTR	5	/* [tos] */
 #define K_SP	7	/* [sp+k]: word k of the stack, field is k */
-#define K_IDX	6	/* [mbp+midx], ++ after, -- before: field is 0, 1, 2 */
+#define K_IDX	6	/* [mbp+midx], ++ after, -- before: field is 0, 1, 2; 5, 6: the string forms of 1, 2 */
 
 typedef struct {
 	short	kind;
