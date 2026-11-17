@@ -50,6 +50,53 @@ udivmod4:
 	st [pfp-4], pop
 	ld push, $32
 	st [pfp-6], pop
+! a divisor that is a power of two (below 65536), the usual one, is a shift
+! and a mask: the count k is kept in [pfp-6], the remainder is a & (b-1)
+	ld push, [pfp+2]
+	cmp pop, $0
+	skip eq
+	bra udm_gen
+	ld push, [pfp+0]
+	cmp pop, $0
+	skip ne
+	bra udm_gen
+	ld push, [pfp+0]
+	sub tos, $1
+	and.tos [pfp+0]
+	cmp pop, $0
+	skip eq
+	bra udm_gen
+	ld push, $0
+	st [pfp-6], pop
+	ld push, [pfp+0]
+	st [pfp-2], pop
+udm_k:
+	ld push, [pfp-2]
+	cmp pop, $1
+	skip ne
+	bra udm_kdone
+	ld push, [pfp-2]
+	shr tos, $1
+	st [pfp-2], pop
+	ld push, [pfp-6]
+	add tos, $1
+	st [pfp-6], pop
+	bra udm_k
+udm_kdone:
+	ld push, [pfp+0]
+	sub tos, $1
+	and.tos [pfp+4]
+	st [pfp-2], pop
+	ld push, [pfp+6]
+	ld push, [pfp+4]
+	ld push, [pfp-6]
+	calla .sru4
+	ld push, $0
+	ld push, [pfp-2]
+	retf $4
+udm_gen:
+	ld push, $32
+	st [pfp-6], pop
 	ld push, [pfp+6]
 	ld push, [pfp+4]
 udm_loop:
