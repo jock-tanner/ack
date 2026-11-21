@@ -31,6 +31,12 @@ static long		currpos;
 int			__sectionnr;
 #define sectionnr	__sectionnr
 static int		offcnt;
+/*
+ * The section whose output position the shared buffer of all sections
+ * from SECTCNT-1 on is at; it is not the current section when the code
+ * switches to such a section from one with a buffer of its own.
+ */
+static int		sharednr = SECTCNT-1;
 
 void
 __wr_flush(struct fil *ptr)
@@ -159,6 +165,7 @@ int wr_open(const char *filename)
 			return 0;
 #endif /* not OUTSEEK */
 	offcnt = 0;
+	sharednr = SECTCNT-1;
 	return 1;
 }
 
@@ -257,14 +264,14 @@ void
 wr_outsect(int sectno)
 	/* s = section number */
 {
-	struct fil *ptr = &__parts[PARTEMIT + getsect(sectionnr)];
+	if (sectno != sharednr && sectno >= (SECTCNT-1)) {
+		struct fil *ptr = &__parts[PARTEMIT + SECTCNT-1];
 
-	if (sectno != sectionnr && sectno >= (SECTCNT-1) && sectionnr >= (SECTCNT-1)) {
 #ifdef OUTSEEK
 		if (currpos != ptr->currpos)
 		{
 			fseek(ptr->fd, ptr->currpos, SEEK_SET);
-			currpos -> ptr->currpos;
+			currpos = ptr->currpos;
 		}
 #endif
 		wr_bytes(ptr->fd, ptr->pbegin, (long)(ptr->pnow - ptr->pbegin));
@@ -272,7 +279,7 @@ wr_outsect(int sectno)
 #ifdef OUTSEEK
 		currpos = ptr->currpos;
 #endif
-		offset[sectionnr] = ptr->currpos;
+		offset[sharednr] = ptr->currpos;
 		if (offset[sectno] != ptr->currpos) {
 			fseek(ptr->fd, offset[sectno], SEEK_SET);
 			ptr->currpos = offset[sectno];
@@ -283,6 +290,7 @@ wr_outsect(int sectno)
 		ptr->cnt = WBUFSIZ - ((int)offset[sectno] & (WBUFSIZ-1));
 		ptr->pbegin = ptr->pbuf + (WBUFSIZ - ptr->cnt);
 		ptr->pnow = ptr->pbegin;
+		sharednr = sectno;
 	}
 	sectionnr = sectno;
 }
