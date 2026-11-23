@@ -30,6 +30,24 @@ static char rcsid[] = "$Id$";
 
 static void free_saved_moduls(void);
 
+/*
+ * The sizes are ind_t, which can be wider than the size_t of malloc(), as on a
+ * target with 16 bits: a size that doesn't fit is a failure, not a short block.
+ */
+static void* big_malloc(ind_t n)
+{
+	if ((size_t)n != n)
+		return NULL;
+	return malloc((size_t)n);
+}
+
+static void* big_realloc(void* p, ind_t n)
+{
+	if ((size_t)n != n)
+		return NULL;
+	return realloc(p, (size_t)n);
+}
+
 struct memory mems[NMEMS];
 
 bool incore = true; /* true while everything can be kept in core. */
@@ -50,7 +68,15 @@ void init_core(void)
 
 #include "mach.h"
 	modl_initial_size = mems[ALLOMODL].mem_left;
+#if SIZE_MAX < 0xffffffffUL
+	/* After the freeze the biggest module has to fit in ALLOMODL. */
+	modl_initial_size = 32L * 1024;
+#endif
 
+#if SIZE_MAX < 0xffffffffUL
+	/* The pieces are too big for the address space: start out of core. */
+	failed_mem = mems;
+#else
 	for (mem = mems; mem < &mems[NMEMS]; mem++)
 	{
 		string_area = mem == &mems[ALLOLCHR] || mem == &mems[ALLOGCHR];
@@ -60,7 +86,7 @@ void init_core(void)
 		/* Don't malloc() size zero. */
 		if (mem->mem_left > 0)
 		{
-			mem->mem_base = malloc(mem->mem_left);
+			mem->mem_base = big_malloc(mem->mem_left);
 			if (mem->mem_base == NULL)
 			{
 				failed_mem = mem;
@@ -74,6 +100,7 @@ void init_core(void)
 			mem->mem_full++;
 		}
 	}
+#endif
 	if (failed_mem != NULL)
 	{
 		incore = false; /* In core strategy failed. */
@@ -106,8 +133,8 @@ void init_core(void)
  */
 static ind_t move_up(int piece, ind_t incr)
 {
-	size_t oldsize = mems[piece].mem_full + mems[piece].mem_left;
-	size_t newsize;
+	ind_t oldsize = mems[piece].mem_full + mems[piece].mem_left;
+	ind_t newsize;
 	char* newbase;
 
 	if (frozen)
@@ -119,7 +146,7 @@ static ind_t move_up(int piece, ind_t incr)
 		newsize = oldsize + incr;
 		if (newsize > oldsize)
 		{
-			newbase = realloc(mems[piece].mem_base, newsize);
+			newbase = big_realloc(mems[piece].mem_base, newsize);
 			if (newbase != NULL)
 			{
 				mems[piece].mem_base = newbase;
@@ -143,7 +170,7 @@ static bool compact(int piece, ind_t incr, int flag)
 #define FORCED 2
 {
 	struct memory* mem;
-	size_t newsize, oldsize;
+	ind_t newsize, oldsize;
 	char* newbase;
 
 	if (frozen)
@@ -167,7 +194,7 @@ static bool compact(int piece, ind_t incr, int flag)
 		}
 		else
 		{
-			newbase = realloc(mem->mem_base, mem->mem_full);
+			newbase = big_realloc(mem->mem_base, mem->mem_full);
 			if (newbase != NULL)
 			{
 				mem->mem_base = newbase;
@@ -189,7 +216,7 @@ static bool compact(int piece, ind_t incr, int flag)
 		/* Don't shrink ALLOMODL. */
 		while (newsize > oldsize)
 		{
-			newbase = realloc(mem->mem_base, newsize);
+			newbase = big_realloc(mem->mem_base, newsize);
 			if (newbase != NULL)
 			{
 				mem->mem_base = newbase;
@@ -208,7 +235,7 @@ static bool compact(int piece, ind_t incr, int flag)
 	newsize = oldsize + incr;
 	if (newsize < mem->mem_full)
 		return false; /* The size overflowed. */
-	newbase = realloc(mem->mem_base, newsize);
+	newbase = big_realloc(mem->mem_base, newsize);
 	if (newbase == NULL)
 		return false;
 	mem->mem_base = newbase;
@@ -254,8 +281,16 @@ ind_t alloc(int piece, size_t size)
 			return BADOFF;
 	}
 
-	if (incr == 0 || (incr < left + full && move_up(piece, left + full) >= incr)
-	    || move_up(piece, incr) == incr || compact(piece, size, alloctype))
+	/*
+	 * Doubling is for a big address space: with 16 bits it would use up the
+	 * heap, and compact() needs to grow the piece only by what is missing.
+	 */
+	if (incr == 0
+#if SIZE_MAX >= 0xffffffffUL
+	    || (incr < left + full && move_up(piece, left + full) >= incr)
+#endif
+	    || move_up(piece, incr) == incr
+	    || compact(piece, size > left ? size - left : 0, alloctype))
 	{
 		mems[piece].mem_full += size;
 		mems[piece].mem_left -= size;

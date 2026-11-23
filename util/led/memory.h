@@ -8,6 +8,7 @@
 #define __MEMORY_H_INCLUDED__
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stddef.h>
 
 #define ALLOEMIT 0 /* Section contents. */
@@ -29,7 +30,11 @@
 
 #define BADOFF ((ind_t)-1)
 
+#if SIZE_MAX < 0xffffffffUL
+typedef unsigned long ind_t; /* offsets go beyond 64 KiB with a 16 bit size_t */
+#else
 typedef size_t ind_t;
+#endif
 
 struct memory
 {
@@ -49,7 +54,12 @@ struct outname;
  * aligned for any type: modules in ALLOMODL hold structs with pointers and
  * longs (struct outname, struct ar_hdr, ind_t), 8 bytes on a 64-bit host.
  */
-#define int_align(sz) (((sz) + (_Alignof(max_align_t) - 1)) & ~(_Alignof(max_align_t) - 1))
+#if SIZE_MAX < 0xffffffffUL
+#define INT_ALIGN 2
+#else
+#define INT_ALIGN _Alignof(max_align_t)
+#endif
+#define int_align(sz) (((sz) + (INT_ALIGN - 1)) & ~(INT_ALIGN - 1))
 
 extern bool incore;
 extern ind_t core_position;
