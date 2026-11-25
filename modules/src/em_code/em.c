@@ -326,7 +326,7 @@ void C_magic(void)
 }
 
 /***    the compact code generating routines	***/
-#define	fit16i(x)	((x) >= (long)(-0x8000) && (x) <= (long)0x7FFF)
+#define	fit16i(x)	((x) >= -0x7FFFL - 1 && (x) <= 0x7FFFL)
 #define	fit8u(x)	((x) <= 0xFF)		/* x is already unsigned */
 
 void C_pt_ilb(label l)
