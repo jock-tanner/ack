@@ -9,6 +9,7 @@
 */
 
 #if __STDC__
+#include <stdio.h>
 #include <stdlib.h>
 #else
 extern char* malloc();
@@ -30,6 +31,11 @@ char* st_alloc(char** phead, unsigned int size, int count)
 		while (count >= 1 && (p = malloc(size * count)) == 0)
 		{
 			count >>= 1;
+		}
+		if (p == 0)
+		{
+			fputs("out of memory\n", stderr);
+			exit(1);
 		}
 		((_PALLOC_)p)->_A_next = 0;
 		while (--count)
