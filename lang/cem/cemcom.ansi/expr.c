@@ -29,6 +29,10 @@
 #include "fltcstoper.h"
 #include "error.h"
 
+#ifndef PREPEND_SCOPES
+void code_scope(char* text, struct def* def);
+#endif
+
 extern char options[];
 extern int InSizeof;
 
