@@ -17,6 +17,7 @@
 #include <alloc.h>
 #include "idf.h"
 #include "Lpars.h"
+#include "LLlex.h"
 #include "arith.h"
 #include "stack.h"
 #include "type.h"
@@ -130,6 +131,7 @@ void unstack_level(void)
 		struct def* def;
 		struct sdef* sdef;
 		struct tag* tag;
+		int keep = 0;
 
 		/* unlink it from the local stack level */
 		local_level->sl_entry = se->next;
@@ -161,7 +163,10 @@ void unstack_level(void)
 			/* unlink it from the struct list under the idf block */
 			idf->id_tag = tag->next;
 			free_tag(tag);
+			keep = 1;
 		}
+		if (!keep && level >= L_LOCAL && !idf->id_def && !idf->id_label && !idf->id_sdef && !idf->id_tag && !idf->id_reserved && !idf->id_special && idf != dot.tk_idf && idf != ahead.tk_idf && idf != aside.tk_idf)
+			idf_release(idf);
 	}
 	/*	Unlink the local stack level from the stack.
 	 */

@@ -42,6 +42,13 @@ struct idf *str2idf(char* tg, int cp);
 
 #define	findidf(tg)	str2idf(tg, -1)
 
+/*	void idf_release(struct idf *idf)
+
+	Takes idf out of the namelist so that its structure can be used for
+	another name. Nothing may refer to idf any more.
+*/
+void idf_release(struct idf *idf);
+
 #ifdef IDF_DEBUG
 void idfappfun(int (*fun)(struct idf *, int), int opt);
 #endif

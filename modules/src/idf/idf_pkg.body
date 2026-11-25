@@ -19,6 +19,7 @@ static struct idf* IDF_hashtable[IDF_HASHSIZE];
 	*/
 
 static struct idf* IDF_new(char* tg, int size, int cpy);
+static struct idf* idf_freelist;
 
 void init_idf(void)
 {
@@ -36,6 +37,13 @@ static struct idf* IDF_new(char* tg, int size, int cpy)
 	static char* ip;
 	register char* p;
 
+	if (idf_freelist)
+	{
+		id = idf_freelist;
+		idf_freelist = id->id_next;
+		*id = null_idf;
+		goto have_node;
+	}
 	if (!nidf--)
 	{
 		nidf += NIDS;
@@ -46,6 +54,7 @@ static struct idf* IDF_new(char* tg, int size, int cpy)
 	pidf++;
 	*id = null_idf;
 
+have_node:
 	if (cpy)
 	{
 		if (size > icnt)
@@ -165,4 +174,31 @@ struct idf* str2idf(char tg[], int cpy)
 	notch->id_next = *hook;
 	*hook = notch; /* hooked in */
 	return notch;
+}
+
+void idf_release(struct idf* idf)
+{
+	/*	idf is taken out of the symbol table and kept for reuse by
+		str2idf(). The caller must know that nothing refers to it.
+		The text of the identifier is not given back.
+	*/
+	register unsigned int hash;
+	register char* cp = idf->id_text;
+	register int c;
+	struct idf** hook;
+
+	IDF_STARTHASH(hash);
+	while ((c = *cp++))
+	{
+		IDF_ENHASH(hash, c);
+	}
+	IDF_STOPHASH(hash);
+	hook = &IDF_hashtable[hash];
+	while (*hook && *hook != idf)
+		hook = &(*hook)->id_next;
+	if (!*hook)
+		return;
+	*hook = idf->id_next;
+	idf->id_next = idf_freelist;
+	idf_freelist = idf;
 }
