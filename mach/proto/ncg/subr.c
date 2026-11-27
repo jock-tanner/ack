@@ -563,7 +563,7 @@ unsigned stackupto(token_p limit, int ply, int toplevel) {
 	int i,diff;
 	int tpl;        /* saved tokpatlen */
 	int nareg;	/* saved nareg */
-	int areg[MAXALLREG];
+	int areg[MAXALLREG + 1];
 	c1_p cp;
 	token_p tp;
 	unsigned totalcost=0;

@@ -40,7 +40,7 @@ int (*C_outpart)(int);
 int (*C_swtout)(void);
 int (*C_swttmp)(void);
 
-#if BUFSIZ <= 1024 && BIGMACHINE
+#if BUFSIZ <= 1024 && BIGMACHINE && !defined(__ACK__)
 #define BUFFERSIZ	8*BUFSIZ
 #else
 #define BUFFERSIZ	BUFSIZ

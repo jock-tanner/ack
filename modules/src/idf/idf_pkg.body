@@ -31,8 +31,14 @@ static struct idf* IDF_new(char* tg, int size, int cpy)
 	static struct idf* pidf;
 	static struct idf null_idf;
 	register struct idf* id;
+#ifdef __ACK__
+/* a small data space: take less at a time */
+#define NIDS 10
+#define IBUFSIZ 512
+#else
 #define NIDS 50
 #define IBUFSIZ 2048
+#endif
 	static unsigned int icnt;
 	static char* ip;
 	register char* p;

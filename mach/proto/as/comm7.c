@@ -341,6 +341,21 @@ void emitx(valu_t val, int n)
 
 void emit8(int64_t arg)
 {
+#ifdef __ACK__
+	/* only 32 bits of the value are kept by the ACK compilers: sign extend */
+	int ext = arg < 0 ? -1 : 0;
+#ifdef WORDS_REVERSED
+	emit2(ext);
+	emit2(ext);
+	emit2((int)(arg >> 16));
+	emit2((int)(arg));
+#else
+	emit2((int)(arg));
+	emit2((int)(arg >> 16));
+	emit2(ext);
+	emit2(ext);
+#endif
+#else
 #ifdef WORDS_REVERSED
 	emit2((int)(arg >> 48));
 	emit2((int)(arg >> 32));
@@ -351,6 +366,7 @@ void emit8(int64_t arg)
 	emit2((int)(arg >> 16));
 	emit2((int)(arg >> 32));
 	emit2((int)(arg >> 48));
+#endif
 #endif
 }
 

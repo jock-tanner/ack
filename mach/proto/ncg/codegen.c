@@ -72,7 +72,7 @@ unsigned codegen(byte* codep, int ply, int toplevel, unsigned costlimit, int for
 #endif
 	unsigned totalcost = 0;
 	int inscoerc = 0;
-	int procarg[MAXPROCARG + 1] = {};
+	int procarg[MAXPROCARG + 1] = {0};
 #ifdef ALLOW_NEXTEM
 	static int paniced;
 	char* savebp = 0;

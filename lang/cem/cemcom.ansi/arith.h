@@ -23,7 +23,12 @@
 #include <em_arith.h> /* obtain definition of "arith"	*/
 #include <em_label.h> /* obtain definition of "label" */
 
+#ifdef __ACK__
+/* the ACK compilers have no 64 bit integers */
+#define writh long
+#else
 #define writh long long
+#endif
 /* The compiler also uses "unsigned writh". */
 
 struct expr;

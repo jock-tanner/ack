@@ -9,7 +9,7 @@ typedef struct state {
 	int st_sh;                              /* stackheight */
 	token_t st_fs[MAXFSTACK];               /* fakestack */
 	int st_na;                              /* nallreg */
-	int st_ar[MAXALLREG];                   /* allreg[] */
+	int st_ar[MAXALLREG + 1];               /* allreg[] */
 	token_p st_ct;                          /* curtoken */
 	result_t st_do[LONGESTPATTERN];         /* dollar[] */
 	struct reginfo st_mr[NREGS];            /* machregs[] */

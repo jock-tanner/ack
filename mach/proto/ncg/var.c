@@ -19,7 +19,7 @@ static char rcsid[] = "$Id$";
 int stackheight = 0;
 token_t fakestack[MAXFSTACK];
 int nallreg = 0;
-int allreg[MAXALLREG];
+int allreg[MAXALLREG + 1];
 token_p curtoken = (token_p) 0;
 result_t dollar[LONGESTPATTERN];
 int nemlines =0;

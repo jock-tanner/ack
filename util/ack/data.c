@@ -14,14 +14,14 @@ char* rts = NULL; /* The runtime-system */
 char* rtsuf = NULL; /* The runtime-system module suffix */
 char* Optlist = NULL; /* Which optimizers */
 
-list_head arguments = {}; /* List of arguments */
-list_head flags = {}; /* List of flags */
+list_head arguments; /* List of arguments */
+list_head flags; /* List of flags */
 
-list_head tr_list = {}; /* List of transformations */
+list_head tr_list; /* List of transformations */
 
-list_head R_list = {}; /* List of -R flags */
-list_head head_list = {}; /* List of suffices for headers */
-list_head tail_list = {}; /* List of suffices for tails */
+list_head R_list; /* List of -R flags */
+list_head head_list; /* List of suffices for headers */
+list_head tail_list; /* List of suffices for tails */
 
 int k_flag = 0; /* Like -k of lint */
 int t_flag = 0; /* Preserve intermediate files */
@@ -43,8 +43,8 @@ char* outfile = NULL; /* The result file e.g. a.out */
 trf* linker = NULL; /* Pointer to the Loader/Linker */
 trf* cpp_trafo = NULL; /* Pointer to C-preprocessor */
 
-path in = {}; /* The current single input pathname */
-path out = {}; /* The current output pathname */
-path orig = {}; /* The original input path */
+path in; /* The current single input pathname */
+path out; /* The current output pathname */
+path orig; /* The original input path */
 char* p_basename = NULL; /* The current basename */
 const char* p_suffix = NULL; /* The current input suffix */
